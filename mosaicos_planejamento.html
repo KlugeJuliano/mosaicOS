@@ -1,0 +1,610 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans, sans-serif); }
+
+.container { padding: 1.5rem 1rem; max-width: 680px; }
+
+.section-title {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 2rem 0 0.75rem;
+}
+.section-title:first-child { margin-top: 0; }
+
+/* Tabs */
+.tabs { display: flex; gap: 0; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 1.5rem; }
+.tab {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -0.5px;
+  transition: color 0.15s;
+  background: none;
+  border-top: none; border-left: none; border-right: none;
+}
+.tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Principles grid */
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.principle-card {
+  background: var(--color-background-secondary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md, 8px);
+  padding: 12px 14px;
+}
+.principle-icon { font-size: 16px; margin-bottom: 6px; }
+.principle-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 3px; }
+.principle-desc { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; }
+
+/* Constraints */
+.constraint-group { margin-bottom: 1.25rem; }
+.constraint-group-title { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 8px; }
+.constraint {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px;
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md, 8px);
+  margin-bottom: 6px;
+  background: var(--color-background-primary);
+}
+.constraint-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.constraint-text { font-size: 12px; color: var(--color-text-primary); line-height: 1.5; }
+.constraint-sub { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+.dot-hard { background: #E24B4A; }
+.dot-scope { background: #EF9F27; }
+.dot-tech { background: #378ADD; }
+.dot-quality { background: #1D9E75; }
+
+/* Milestones */
+.milestone {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  cursor: pointer;
+}
+.milestone:last-child { border-bottom: none; }
+.milestone-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500;
+  flex-shrink: 0;
+}
+.milestone-body { flex: 1; }
+.milestone-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 3px; }
+.milestone-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.4; }
+.milestone-steps { margin-top: 10px; display: none; }
+.milestone-steps.open { display: block; }
+.step {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 6px 0 6px 8px;
+  border-left: 1.5px solid var(--color-border-secondary);
+  margin-bottom: 4px;
+}
+.step-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-border-primary); margin-top: 5px; flex-shrink: 0; }
+.step-text { font-size: 12px; color: var(--color-text-secondary); line-height: 1.4; }
+.step-text strong { color: var(--color-text-primary); font-weight: 500; }
+.badge {
+  font-size: 10px; padding: 2px 7px; border-radius: 99px;
+  font-weight: 500; margin-left: 6px; vertical-align: middle;
+}
+.badge-phase0 { background: #EEEDFE; color: #3C3489; }
+.badge-phase1 { background: #E1F5EE; color: #085041; }
+.badge-phase2 { background: #FAEEDA; color: #633806; }
+.badge-phase3 { background: #E6F1FB; color: #0C447C; }
+.badge-phase4 { background: #FAECE7; color: #4A1B0C; }
+.badge-now { background: #F7C1C1; color: #501313; font-size: 9px; }
+
+/* Arch layers */
+.arch-layer {
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md, 8px);
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+.arch-layer-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--color-background-secondary);
+  cursor: pointer;
+}
+.arch-layer-color { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.arch-layer-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+.arch-layer-tag { font-size: 10px; color: var(--color-text-tertiary); }
+.arch-layer-body { display: none; padding: 10px 14px 12px; background: var(--color-background-primary); }
+.arch-layer-body.open { display: block; }
+.arch-components { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.arch-comp {
+  font-size: 11px; padding: 3px 9px;
+  background: var(--color-background-secondary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: 99px;
+  color: var(--color-text-secondary);
+}
+.arch-note { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 6px; }
+</style>
+
+<div class="container">
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('principles')">Princípios</button>
+  <button class="tab" onclick="showTab('constraints')">Constraints</button>
+  <button class="tab" onclick="showTab('arch')">Arquitetura</button>
+  <button class="tab" onclick="showTab('roadmap')">Roadmap</button>
+</div>
+
+<!-- PRINCÍPIOS -->
+<div class="tab-panel active" id="tab-principles">
+  <p class="section-title">8 princípios fundacionais</p>
+  <div class="principles">
+    <div class="principle-card">
+      <div class="principle-icon">⬡</div>
+      <div class="principle-name">Microkernel-first</div>
+      <div class="principle-desc">Kernel mínimo: memória, scheduling, IPC, capabilities. Tudo mais em user-space.</div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-icon">◻</div>
+      <div class="principle-name">Graphical by default</div>
+      <div class="principle-desc">Boot direto num ambiente gráfico. Não é terminal com GUI adicionado depois.</div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-icon">⬚</div>
+      <div class="principle-name">Container-native</div>
+      <div class="principle-desc">Toda aplicação roda em contexto isolado. Inspirado em Docker, FreeBSD Jails.</div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-icon">◈</div>
+      <div class="principle-name">User-space services</div>
+      <div class="principle-desc">Storage, network, drivers, áudio — todos fora do kernel.</div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-icon">≡</div>
+      <div class="principle-name">Declarative config</div>
+      <div class="principle-desc">Sistema descrito em YAML/TOML. Serviços, containers, recovery — tudo declarado.</div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-icon">⌁</div>
+      <div class="principle-name">Translators (Hurd)</div>
+      <div class="principle-desc">Recursos (cloud, DB, rede) expostos como parte da árvore de filesystem.</div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-icon">↺</div>
+      <div class="principle-name">Self-healing</div>
+      <div class="principle-desc">Crash no compositor não derruba o sistema. Recovery é primitiva do OS.</div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-icon">⊕</div>
+      <div class="principle-name">Capability security</div>
+      <div class="principle-desc">Serviços recebem somente o que precisam. Zero permissões implícitas.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONSTRAINTS -->
+<div class="tab-panel" id="tab-constraints">
+
+  <div class="constraint-group">
+    <div class="constraint-group-title">Hard constraints — o que NÃO fazer agora</div>
+    <div class="constraint">
+      <div class="constraint-dot dot-hard"></div>
+      <div>
+        <div class="constraint-text">Não rodar em hardware real ainda</div>
+        <div class="constraint-sub">QEMU é o target inicial. Hardware real = problema de driver antes do tempo.</div>
+      </div>
+    </div>
+    <div class="constraint">
+      <div class="constraint-dot dot-hard"></div>
+      <div>
+        <div class="constraint-text">Não buscar compatibilidade POSIX completa</div>
+        <div class="constraint-sub">Linux personality é pesquisa futura, não milestone inicial.</div>
+      </div>
+    </div>
+    <div class="constraint">
+      <div class="constraint-dot dot-hard"></div>
+      <div>
+        <div class="constraint-text">Não implementar GPU / aceleração gráfica</div>
+        <div class="constraint-sub">Framebuffer via QEMU é suficiente até o Milestone 5.</div>
+      </div>
+    </div>
+    <div class="constraint">
+      <div class="constraint-dot dot-hard"></div>
+      <div>
+        <div class="constraint-text">Não construir sistema de arquivos do zero (ZFS, Btrfs)</div>
+        <div class="constraint-sub">Usar filesystem existente como base, expor via translator se necessário.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="constraint-group">
+    <div class="constraint-group-title">Scope constraints — foco do projeto</div>
+    <div class="constraint">
+      <div class="constraint-dot dot-scope"></div>
+      <div>
+        <div class="constraint-text">Cada milestone deve produzir algo que roda</div>
+        <div class="constraint-sub">Nada de design puro sem execução. Mesmo que seja um hello world em QEMU.</div>
+      </div>
+    </div>
+    <div class="constraint">
+      <div class="constraint-dot dot-scope"></div>
+      <div>
+        <div class="constraint-text">Documentar antes de implementar</div>
+        <div class="constraint-sub">Boot flow, service model, recovery policy — tudo documentado antes do código.</div>
+      </div>
+    </div>
+    <div class="constraint">
+      <div class="constraint-dot dot-scope"></div>
+      <div>
+        <div class="constraint-text">Kernel não parseia arquivos de configuração</div>
+        <div class="constraint-sub">mosaic-init é responsável por ler o system manifest e iniciar serviços.</div>
+      </div>
+    </div>
+    <div class="constraint">
+      <div class="constraint-dot dot-scope"></div>
+      <div>
+        <div class="constraint-text">Proteção de licença antes do primeiro código</div>
+        <div class="constraint-sub">Escolher MIT, BSD-2, Apache ou GPL antes de qualquer commit de código.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="constraint-group">
+    <div class="constraint-group-title">Tech constraints — decisões de stack</div>
+    <div class="constraint">
+      <div class="constraint-dot dot-tech"></div>
+      <div>
+        <div class="constraint-text">Microkernel base: L4Re / Fiasco.OC</div>
+        <div class="constraint-sub">Experimentar L4Re primeiro antes de considerar alternativas (seL4, Genode).</div>
+      </div>
+    </div>
+    <div class="constraint">
+      <div class="constraint-dot dot-tech"></div>
+      <div>
+        <div class="constraint-text">Implementações iniciais em Rust ou C</div>
+        <div class="constraint-sub">Rust para serviços de user-space. C para partes próximas ao kernel/ABI.</div>
+      </div>
+    </div>
+    <div class="constraint">
+      <div class="constraint-dot dot-tech"></div>
+      <div>
+        <div class="constraint-text">IPC deve ser o único canal entre serviços</div>
+        <div class="constraint-sub">Sem memória compartilhada implícita entre componentes isolados.</div>
+      </div>
+    </div>
+    <div class="constraint">
+      <div class="constraint-dot dot-tech"></div>
+      <div>
+        <div class="constraint-text">WASM antes de Linux personality</div>
+        <div class="constraint-sub">Ordem de complexidade crescente: native → WASM → Linux ABI.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="constraint-group">
+    <div class="constraint-group-title">Quality constraints — padrão mínimo</div>
+    <div class="constraint">
+      <div class="constraint-dot dot-quality"></div>
+      <div>
+        <div class="constraint-text">Todo serviço deve ter política de recovery declarada</div>
+        <div class="constraint-sub">restart, fallback, ou fail-fast — nunca silêncio.</div>
+      </div>
+    </div>
+    <div class="constraint">
+      <div class="constraint-dot dot-quality"></div>
+      <div>
+        <div class="constraint-text">Capabilities são auditáveis em todo momento</div>
+        <div class="constraint-sub">Deve existir ferramenta (mosaicctl) para inspecionar permissões de qualquer serviço.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ARQUITETURA -->
+<div class="tab-panel" id="tab-arch">
+  <p style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 1rem; line-height: 1.5;">
+    Clique em cada camada para ver os componentes. As camadas inferiores são pré-requisito das superiores.
+  </p>
+
+  <div class="arch-layer">
+    <div class="arch-layer-header" onclick="toggleArch('a0')">
+      <div class="arch-layer-color" style="background:#2C2C2A"></div>
+      <div class="arch-layer-name">Microkernel</div>
+      <div class="arch-layer-tag">Camada 0 — L4Re / Fiasco.OC</div>
+    </div>
+    <div class="arch-layer-body" id="a0">
+      <div class="arch-note">Fundação do sistema. Responsabilidade mínima e bem definida.</div>
+      <div class="arch-components">
+        <span class="arch-comp">Memória</span><span class="arch-comp">Scheduling</span><span class="arch-comp">IPC</span><span class="arch-comp">Capabilities</span><span class="arch-comp">Isolamento de hardware</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arch-layer">
+    <div class="arch-layer-header" onclick="toggleArch('a1')">
+      <div class="arch-layer-color" style="background:#533AB7"></div>
+      <div class="arch-layer-name">Boot + Core</div>
+      <div class="arch-layer-tag">Camada 1 — mosaic-init + service manager</div>
+    </div>
+    <div class="arch-layer-body" id="a1">
+      <div class="arch-note">Primeira camada de user-space. Lê o manifest e orquestra os serviços do sistema.</div>
+      <div class="arch-components">
+        <span class="arch-comp">bootloader</span><span class="arch-comp">initial task</span><span class="arch-comp">root server</span><span class="arch-comp">mosaic-init</span><span class="arch-comp">service-manager</span><span class="arch-comp">capability-manager</span><span class="arch-comp">process-manager</span><span class="arch-comp">ipc-router</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arch-layer">
+    <div class="arch-layer-header" onclick="toggleArch('a2')">
+      <div class="arch-layer-color" style="background:#0F6E56"></div>
+      <div class="arch-layer-name">Services</div>
+      <div class="arch-layer-tag">Camada 2 — serviços isolados de sistema</div>
+    </div>
+    <div class="arch-layer-body" id="a2">
+      <div class="arch-note">Componentes de sistema fora do kernel. Cada um com capabilities explícitas.</div>
+      <div class="arch-components">
+        <span class="arch-comp">storage</span><span class="arch-comp">filesystem</span><span class="arch-comp">network</span><span class="arch-comp">device-manager</span><span class="arch-comp">driver-host</span><span class="arch-comp">auth</span><span class="arch-comp">logging</span><span class="arch-comp">audio</span><span class="arch-comp">power</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arch-layer">
+    <div class="arch-layer-header" onclick="toggleArch('a3')">
+      <div class="arch-layer-color" style="background:#185FA5"></div>
+      <div class="arch-layer-name">Graphics Stack</div>
+      <div class="arch-layer-tag">Camada 3 — display, compositor, input</div>
+    </div>
+    <div class="arch-layer-body" id="a3">
+      <div class="arch-note">Ambiente gráfico como serviços user-space. Crash do compositor não afeta o kernel.</div>
+      <div class="arch-components">
+        <span class="arch-comp">display-server</span><span class="arch-comp">compositor</span><span class="arch-comp">window-manager</span><span class="arch-comp">input-server</span><span class="arch-comp">font-server</span><span class="arch-comp">theme-server</span><span class="arch-comp">clipboard-server</span><span class="arch-comp">gui-protocol</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arch-layer">
+    <div class="arch-layer-header" onclick="toggleArch('a4')">
+      <div class="arch-layer-color" style="background:#A32D2D"></div>
+      <div class="arch-layer-name">Recovery</div>
+      <div class="arch-layer-tag">Camada 4 — self-healing nativo</div>
+    </div>
+    <div class="arch-layer-body" id="a4">
+      <div class="arch-note">Watchdog, health monitor e crash manager funcionam em paralelo com todos os serviços.</div>
+      <div class="arch-components">
+        <span class="arch-comp">guardian</span><span class="arch-comp">watchdog</span><span class="arch-comp">health-monitor</span><span class="arch-comp">crash-manager</span><span class="arch-comp">rollback-manager</span><span class="arch-comp">snapshot-manager</span><span class="arch-comp">safe-gui</span><span class="arch-comp">recovery-shell</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arch-layer">
+    <div class="arch-layer-header" onclick="toggleArch('a5')">
+      <div class="arch-layer-color" style="background:#3B6D11"></div>
+      <div class="arch-layer-name">Translators</div>
+      <div class="arch-layer-tag">Camada 5 — filesystem como interface universal</div>
+    </div>
+    <div class="arch-layer-body" id="a5">
+      <div class="arch-note">Inspirado no GNU Hurd. Cloud, banco de dados e APIs expostos como diretórios.</div>
+      <div class="arch-components">
+        <span class="arch-comp">/cloud → s3 translator</span><span class="arch-comp">/db → sqlite translator</span><span class="arch-comp">/net/http → network translator</span><span class="arch-comp">/dev/sensors → virtual device</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arch-layer">
+    <div class="arch-layer-header" onclick="toggleArch('a6')">
+      <div class="arch-layer-color" style="background:#854F0B"></div>
+      <div class="arch-layer-name">Runtimes + Containers</div>
+      <div class="arch-layer-tag">Camada 6 — isolamento de aplicações</div>
+    </div>
+    <div class="arch-layer-body" id="a6">
+      <div class="arch-note">Toda aplicação roda isolada. Progresso: native → WASM → Linux personality.</div>
+      <div class="arch-components">
+        <span class="arch-comp">native-runtime</span><span class="arch-comp">wasm-runtime</span><span class="arch-comp">linux-personality</span><span class="arch-comp">container-manager</span><span class="arch-comp">policy-engine</span><span class="arch-comp">gui-proxy</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arch-layer">
+    <div class="arch-layer-header" onclick="toggleArch('a7')">
+      <div class="arch-layer-color" style="background:#993C1D"></div>
+      <div class="arch-layer-name">Shell + SDK + Tools</div>
+      <div class="arch-layer-tag">Camada 7 — interface do desenvolvedor</div>
+    </div>
+    <div class="arch-layer-body" id="a7">
+      <div class="arch-note">Desktop shell, ferramentas CLI e SDK para desenvolver no MosaicOS.</div>
+      <div class="arch-components">
+        <span class="arch-comp">desktop-shell</span><span class="arch-comp">terminal</span><span class="arch-comp">mosaicctl</span><span class="arch-comp">mosaic-compose</span><span class="arch-comp">mosaic-debug</span><span class="arch-comp">gui-sdk</span><span class="arch-comp">translator-sdk</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROADMAP -->
+<div class="tab-panel" id="tab-roadmap">
+  <p style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 1rem; line-height: 1.5;">
+    Clique em cada milestone para ver os steps detalhados.
+  </p>
+
+  <div class="milestone" onclick="toggleMilestone('m0')">
+    <div class="milestone-num" style="background:#EEEDFE;color:#3C3489">M0</div>
+    <div class="milestone-body">
+      <div class="milestone-title">Documentação e Arquitetura <span class="badge badge-now">AGORA</span></div>
+      <div class="milestone-desc">Manifesto, princípios, boot flow, formato de configuração do sistema.</div>
+      <div class="milestone-steps" id="m0">
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Escolher licença</strong> — MIT, BSD-2 ou Apache-2.0 antes de qualquer commit</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Criar repositório</strong> com estrutura de diretórios do README</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Escrever architecture.md</strong> com diagrama das camadas e responsabilidades</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Escrever boot-flow.md</strong> descrevendo cada etapa do boot</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Definir system manifest format</strong> (YAML/TOML) — versão 0.1 do schema</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Escrever service-model.md</strong> — ciclo de vida, capabilities, recovery policy</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Criar roadmap.md</strong> com milestones e critérios de conclusão de cada um</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="milestone" onclick="toggleMilestone('m1')">
+    <div class="milestone-num" style="background:#EEEDFE;color:#3C3489">M1</div>
+    <div class="milestone-body">
+      <div class="milestone-title">L4Re Laboratory <span class="badge badge-phase0">Fase 0</span></div>
+      <div class="milestone-desc">Ambiente de laboratório: compilar e rodar L4Re no QEMU. Hello world funcional.</div>
+      <div class="milestone-steps" id="m1">
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Setup do ambiente</strong> — Docker ou VM com toolchain L4Re</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Build L4Re do source</strong> — compilar Fiasco.OC + L4Re userland</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Boot em QEMU</strong> — script de boot funcional e reproduzível</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Hello world task</strong> — primeiro programa rodando como tarefa L4Re</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Documentar</strong> — passo a passo no docs/lab-setup.md</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Estudar IPC</strong> — enviar mensagem entre duas tarefas via IPC L4Re</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="milestone" onclick="toggleMilestone('m2')">
+    <div class="milestone-num" style="background:#E1F5EE;color:#085041">M2</div>
+    <div class="milestone-body">
+      <div class="milestone-title">mosaic-init mínimo <span class="badge badge-phase1">Fase 1</span></div>
+      <div class="milestone-desc">Init que lê um manifest simples e inicia um serviço de user-space com logging.</div>
+      <div class="milestone-steps" id="m2">
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Parser de manifest</strong> — ler YAML/TOML com definições de serviços</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Iniciar primeiro serviço</strong> — spawnar tarefa L4Re a partir do manifest</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Serviço de log básico</strong> — logd recebendo mensagens via IPC</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Healthcheck simples</strong> — ping/pong para verificar se serviço está vivo</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Validação de manifest</strong> — erros claros em caso de configuração inválida</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="milestone" onclick="toggleMilestone('m3')">
+    <div class="milestone-num" style="background:#E1F5EE;color:#085041">M3</div>
+    <div class="milestone-body">
+      <div class="milestone-title">Service Manager <span class="badge badge-phase1">Fase 1</span></div>
+      <div class="milestone-desc">Múltiplos serviços com rastreamento de estado, dependências e restart.</div>
+      <div class="milestone-steps" id="m3">
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Grafo de dependências</strong> — ordenar serviços por requires: antes de iniciar</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>State machine de serviço</strong> — starting → running → failed → restarting</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Restart automático</strong> — política restart: always / on-failure / never</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>mosaicctl status</strong> — listar serviços e estados</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Capability assignment</strong> — passar capabilities definidas no manifest</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Testes</strong> — iniciar 3+ serviços com dependências e verificar ordem correta</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="milestone" onclick="toggleMilestone('m4')">
+    <div class="milestone-num" style="background:#FAEEDA;color:#633806">M4</div>
+    <div class="milestone-body">
+      <div class="milestone-title">Recovery Prototype <span class="badge badge-phase2">Fase 2</span></div>
+      <div class="milestone-desc">Watchdog, detecção de falha, restart e logs de recovery.</div>
+      <div class="milestone-steps" id="m4">
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Implementar watchdog</strong> — heartbeat timeout entre serviço e guardian</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Detectar crash</strong> — sinal de falha via IPC ou exit code</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Política de fallback</strong> — após N restarts, tentar serviço alternativo</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Crash logs</strong> — registrar timestamp, motivo e histórico de restarts</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Simular crash</strong> — matar processo propositalmente e observar recovery</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Recovery shell</strong> — modo seguro quando serviço crítico não recupera</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="milestone" onclick="toggleMilestone('m5')">
+    <div class="milestone-num" style="background:#FAEEDA;color:#633806">M5</div>
+    <div class="milestone-body">
+      <div class="milestone-title">Graphical Prototype <span class="badge badge-phase2">Fase 2</span></div>
+      <div class="milestone-desc">Framebuffer + compositor mínimo + janela + input. Tudo em QEMU.</div>
+      <div class="milestone-steps" id="m5">
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Display service</strong> — escrever pixels no framebuffer via QEMU VGA</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Compositor mínimo</strong> — compositar buffers de janelas na tela</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Protocolo GUI</strong> — definir mensagens IPC entre app e compositor</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Input server</strong> — capturar teclado/mouse via QEMU</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Primeira janela</strong> — app que desenha um retângulo e recebe input</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Integrar recovery</strong> — crash do compositor → safe-gui mode</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="milestone" onclick="toggleMilestone('m6')">
+    <div class="milestone-num" style="background:#E6F1FB;color:#0C447C">M6</div>
+    <div class="milestone-body">
+      <div class="milestone-title">Translator Prototype <span class="badge badge-phase3">Fase 3</span></div>
+      <div class="milestone-desc">Virtual filesystem translator expondo um recurso como diretório.</div>
+      <div class="milestone-steps" id="m6">
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Definir translator API</strong> — interface IPC para montar/desmontar translators</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Translator simples</strong> — expor um recurso estático como diretório</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Mount no manifest</strong> — configurar translator em mounts: no YAML</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Lifecycle</strong> — translator iniciado pelo service manager como qualquer serviço</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>translator-sdk v0.1</strong> — biblioteca para criar novos translators</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="milestone" onclick="toggleMilestone('m7')">
+    <div class="milestone-num" style="background:#E6F1FB;color:#0C447C">M7</div>
+    <div class="milestone-body">
+      <div class="milestone-title">Container Prototype <span class="badge badge-phase3">Fase 3</span></div>
+      <div class="milestone-desc">Manifest de container, processo isolado com capabilities, proxy GUI.</div>
+      <div class="milestone-steps" id="m7">
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Container manifest</strong> — schema de containers: no YAML com runtime, gui, mounts, network</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Processo isolado</strong> — namespace separado via capabilities L4Re</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>GUI proxy</strong> — app dentro do container acessa compositor via proxy</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Policy engine</strong> — avaliar permissões de clipboard, screen capture, rede</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>mosaic-run</strong> — CLI para iniciar container a partir do manifest</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="milestone" onclick="toggleMilestone('m8')">
+    <div class="milestone-num" style="background:#FAECE7;color:#4A1B0C">M8</div>
+    <div class="milestone-body">
+      <div class="milestone-title">WASM Runtime <span class="badge badge-phase4">Fase 4</span></div>
+      <div class="milestone-desc">Rodar módulo WASM com APIs controladas do sistema.</div>
+      <div class="milestone-steps" id="m8">
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Escolher runtime WASM</strong> — Wasmtime ou wasm3 como base</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Hospedar runtime</strong> — rodar o engine WASM como serviço user-space</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Expor syscall API</strong> — interface controlada para I/O, GUI, logging</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Rodar módulo hello world</strong> — WASM compilado rodando no ambiente</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Sandboxing</strong> — verificar que módulo não pode escapar das capabilities</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="milestone" onclick="toggleMilestone('m9')">
+    <div class="milestone-num" style="background:#FAECE7;color:#4A1B0C">M9</div>
+    <div class="milestone-body">
+      <div class="milestone-title">Linux Personality Research <span class="badge badge-phase4">Fase 4</span></div>
+      <div class="milestone-desc">ELF loading, syscalls básicos, tentar rodar binário Linux mínimo.</div>
+      <div class="milestone-steps" id="m9">
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Estudar ELF</strong> — entender formato e loading de binários x86-64</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Implementar write() e exit()</strong> — primeiros 2 syscalls Linux</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Rodar binário estático</strong> — tiny static Linux binary imprimindo texto</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Documentar aprendizados</strong> — quais syscalls são viáveis, quais são complexos demais</div></div>
+        <div class="step"><div class="step-dot"></div><div class="step-text"><strong>Avaliar continuidade</strong> — decidir se Linux personality é roadmap de longo prazo</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+function toggleMilestone(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+function toggleArch(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+</script>

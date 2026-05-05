@@ -1,0 +1,19 @@
+# MosaicOS Git Ignore
+
+# Build artifacts
+build/
+bin/
+obj/
+
+# L4Re specific
+l4re-build/
+
+# Temporary files
+*.tmp
+*.log
+.DS_Store
+
+# Editor files
+.vscode/
+.idea/
+*.swp
