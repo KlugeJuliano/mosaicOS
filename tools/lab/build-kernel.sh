@@ -1,33 +1,41 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Configuration
-L4RE_DIR="/home/julianok/.gemini/tmp/klugeos/l4re-source"
-FIASCO_DIR="$L4RE_DIR/src/kernel/fiasco"
-BUILD_DIR="/home/julianok/.gemini/tmp/klugeos/l4re-build"
-KERNEL_BUILD_DIR="$BUILD_DIR/fiasco"
+source "$(dirname "$0")/env.sh"
 
-mkdir -p "$L4RE_DIR"
-mkdir -p "$BUILD_DIR"
-
-# Download L4Re if not exists
-if [ ! -d "$L4RE_DIR/.git" ]; then
-    echo "Downloading L4Re source..."
-    git clone https://github.com/kernkonzept/l4re-core.git "$L4RE_DIR"
-fi
-
-# Download Fiasco if not exists
-if [ ! -d "$FIASCO_DIR/.git" ]; then
-    echo "Downloading Fiasco.OC source..."
-    git clone https://github.com/kernkonzept/fiasco.git "$FIASCO_DIR"
-fi
+mkdir -p "$LAB_WORKDIR" "$BUILD_DIR"
+ensure_l4re_sources
 
 echo "Building Fiasco.OC kernel..."
-mkdir -p "$KERNEL_BUILD_DIR"
 
-# Basic configuration for x86_64
-make -C "$FIASCO_DIR" BUILDDIR="$KERNEL_BUILD_DIR" olddefconfig
+if [ -f "$KERNEL_BUILD_DIR/Makefile" ] \
+   && ! grep -q "srcdir  := $FIASCO_DIR/src" "$KERNEL_BUILD_DIR/Makefile"; then
+    rm -rf "$KERNEL_BUILD_DIR"
+fi
 
-# Build from the build directory (Fiasco creates it inside the source by default in some versions)
-cd "$FIASCO_DIR/build"
-make -j$(nproc)
+if [ ! -f "$KERNEL_BUILD_DIR/Makefile" ]; then
+    make -C "$FIASCO_DIR" B="$KERNEL_BUILD_DIR"
+fi
+
+configure_tool()
+{
+    local file="$KERNEL_BUILD_DIR/globalconfig.out"
+    local key value
+
+    [ -f "$file" ] || return 0
+
+    for key in CC CXX LD HOST_CC HOST_CXX; do
+        value="${!key:-}"
+        [ -n "$value" ] || continue
+
+        if grep -q "^CONFIG_$key=" "$file"; then
+            sed -i "s|^CONFIG_$key=.*|CONFIG_$key=\"$value\"|" "$file"
+        else
+            printf 'CONFIG_%s="%s"\n' "$key" "$value" >> "$file"
+        fi
+    done
+}
+
+configure_tool
+make -C "$KERNEL_BUILD_DIR" olddefconfig
+make -C "$KERNEL_BUILD_DIR" -j"$JOBS"

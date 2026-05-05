@@ -7,6 +7,7 @@ obj/
 
 # L4Re specific
 l4re-build/
+.lab/
 
 # Temporary files
 *.tmp

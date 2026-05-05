@@ -1,15 +1,14 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-L4RE_BUILD_DIR="/home/julianok/.gemini/tmp/klugeos/l4re-build/l4re"
-EXPERIMENTS_DIR="/home/julianok/projetos/klugeos/microkernel/experiments"
+source "$(dirname "$0")/env.sh"
 
 echo "Building experiments..."
 
 # Build Hello World
 cd "$EXPERIMENTS_DIR/hello"
-make L4DIR="/home/julianok/.gemini/tmp/klugeos/l4re-source" OBJ32_DIR="$L4RE_BUILD_DIR/obj/l4/x86" OBJ64_DIR="$L4RE_BUILD_DIR/obj/l4/amd64"
+bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
 
 # Build IPC Ping
 cd "$EXPERIMENTS_DIR/ipc-ping"
-make L4DIR="/home/julianok/.gemini/tmp/klugeos/l4re-source" OBJ32_DIR="$L4RE_BUILD_DIR/obj/l4/x86" OBJ64_DIR="$L4RE_BUILD_DIR/obj/l4/amd64"
+bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"

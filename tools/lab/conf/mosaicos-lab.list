@@ -1,0 +1,21 @@
+# vim:set ft=l4mods:
+
+modaddr 0x01100000
+
+default-kernel fiasco -serial_esc
+default-bootstrap bootstrap
+
+entry mosaicos-hello
+roottask moe rom/mosaicos-hello.cfg
+module l4re
+module ned
+module mosaicos-hello.cfg
+module mosaic-hello
+
+entry mosaicos-ipc-ping
+roottask moe rom/mosaicos-ipc-ping.cfg
+module l4re
+module ned
+module mosaicos-ipc-ping.cfg
+module ping-receiver
+module ping-sender

@@ -44,6 +44,9 @@ QEMU flags must include:
 - `-nographic` or `-display none` for headless boot in CI
 - `-no-reboot` to halt on exit
 
+The lab runner also passes `-monitor none` so QEMU's monitor does not compete
+with the serial console for stdio when `-nographic` is enabled.
+
 ### 3. Hello world task
 
 Location: `microkernel/experiments/hello/main.c` (or `main.rs` if using Rust)
@@ -110,12 +113,12 @@ Capabilities in L4Re are unforgeable references to kernel objects. A task receiv
 
 This milestone is complete when:
 
-- [ ] L4Re builds from source using the provided scripts with no manual steps
-- [ ] QEMU boots the L4Re image and shows kernel startup messages on serial
-- [ ] Hello world task runs and prints the expected message
-- [ ] IPC ping experiment: sender sends a message, receiver prints it
-- [ ] `docs/lab-setup.md` is complete and accurate — a new contributor can follow it from scratch
-- [ ] All build scripts are idempotent (running twice produces the same result)
+- [x] L4Re builds from source using the provided scripts with no manual steps
+- [x] QEMU boots the L4Re image and shows kernel startup messages on serial
+- [x] Hello world task runs and prints the expected message
+- [x] IPC ping experiment: sender sends a message, receiver prints it
+- [x] `docs/lab-setup.md` is complete and accurate — a new contributor can follow it from scratch
+- [x] All build scripts are idempotent (running twice produces the same result)
 
 ## Notes for the AI
 

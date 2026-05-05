@@ -1,16 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-KERNEL_BIN="/home/julianok/.gemini/tmp/klugeos/l4re-build/fiasco/fiasco"
-L4RE_BIN_DIR="/home/julianok/.gemini/tmp/klugeos/l4re-build/l4re/bin/amd64_l4f"
+source "$(dirname "$0")/env.sh"
 
-echo "Running QEMU..."
+ENTRY="${1:-$LAB_ENTRY}"
+MODULES_LIST="${MODULES_LIST:-$LAB_CONF_DIR/mosaicos-lab.list}"
+MODULE_SEARCH_PATH="${MODULE_SEARCH_PATH:-$LAB_CONF_DIR:$EXPERIMENTS_DIR/hello:$EXPERIMENTS_DIR/ipc-ping:$KERNEL_BUILD_DIR}"
+QEMU_OPTIONS="${QEMU_OPTIONS:--monitor none -serial stdio -m 512 -M q35 -nographic -no-reboot}"
 
-qemu-system-x86_64 \
-  -kernel "$KERNEL_BIN" \
-  -append "serial esc" \
-  -serial stdio \
-  -m 256M \
-  -nographic \
-  -no-reboot
-  # Note: A real L4Re run requires a boot image (ISO/GRUB) with bootstrap, moe, and modules.
-  # This is a placeholder for the final command once the image is built.
+export MODULES_LIST MODULE_SEARCH_PATH QEMU_OPTIONS
+
+echo "Running L4Re entry '$ENTRY' in QEMU..."
+cd "$L4RE_BUILD_DIR"
+bid_make qemu E="$ENTRY"

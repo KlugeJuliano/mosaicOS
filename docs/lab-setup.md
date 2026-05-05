@@ -1,46 +1,136 @@
 # MosaicOS Lab - L4Re Setup Guide
 
-This document describes how to set up the L4Re (L4 Runtime Environment) laboratory for MosaicOS research.
+This guide establishes the Milestone 1 laboratory: build Fiasco.OC and L4Re,
+boot L4Re in QEMU, run a hello task, and validate basic IPC between two tasks.
 
-## Host System Requirements
-- Linux x86-64
-- Build tools: `make`, `gcc`, `g++`, `git`, `flex`, `bison`, `gawk`, `pkg-config`
-- QEMU: `qemu-system-x86_64`
-- Multi-lib support (for 32-bit/64-bit cross-compilation if needed by L4Re)
+## Host Requirements
 
-## Build Process
+- Linux x86-64 host, tested targets are Ubuntu 24.04 and Arch/CachyOS.
+- `git`, `make`, GCC/G++ 11 to 15 or Clang/LLD, `flex`, `bison`, `gawk`,
+  `pkg-config`/`pkgconf`, `python3`.
+- `qemu-system-x86_64`.
+- GRUB image tooling: `grub-pc-bin`, `mtools`, `xorriso`.
 
-### 1. Download L4Re and Fiasco.OC
-The build scripts in `tools/lab/` will automatically download the necessary sources if they are not present.
+Install dependencies on Ubuntu/Debian or Arch/CachyOS with:
 
-### 2. Building the Kernel
+```bash
+./tools/lab/setup.sh
+```
+
+Or use the container image:
+
+```bash
+docker build -f tools/lab/Dockerfile -t klugeos-l4re-lab .
+docker run --rm -it -v "$PWD:/workspace/klugeos" klugeos-l4re-lab
+```
+
+## Workspace Layout
+
+The scripts are idempotent. By default they use:
+
+- `.lab/ham` and `.lab/.ham` for the L4Re Ham project manager.
+- `.lab/l4` for the complete L4Re source tree.
+- `.lab/fiasco` for the Fiasco.OC source tree.
+- `.lab/build/fiasco` for the kernel build.
+- `.lab/build/l4re` for the L4Re userland build.
+
+Override locations with environment variables:
+
+```bash
+LAB_WORKDIR=/tmp/klugeos-lab ./tools/lab/build-kernel.sh
+L4RE_DIR=/opt/l4re-core BUILD_DIR=/opt/l4re-build ./tools/lab/build-l4re.sh
+```
+
+## Build
+
+From the repository root:
+
 ```bash
 ./tools/lab/build-kernel.sh
-```
-This builds the Fiasco.OC microkernel binary.
-
-### 3. Building L4Re Userland
-```bash
 ./tools/lab/build-l4re.sh
-```
-This builds the core L4Re libraries and services.
-
-### 4. Running the Hello World Experiment
-```bash
 ./tools/lab/build-hello.sh
-./tools/lab/run-qemu.sh
 ```
 
-## Experiments
+`build-kernel.sh` installs the L4Re source tree with Ham when missing, then
+builds the Fiasco.OC kernel. `build-l4re.sh` configures and builds L4Re
+userland. `build-hello.sh` builds both local experiments using the L4Re BID
+make system.
 
-### Hello World
-Location: `microkernel/experiments/hello/`
-Prints a simple message to the serial console and exits.
+## Run Hello
 
-### IPC Ping
-Location: `microkernel/experiments/ipc-ping/`
-Demonstrates basic IPC between a sender and a receiver task.
+```bash
+./tools/lab/run-qemu.sh mosaicos-hello
+```
+
+Expected serial output includes:
+
+```text
+MosaicOS Lab: hello from L4Re
+```
+
+The runner delegates to L4Re's `make qemu` target with these required defaults:
+
+- `-monitor none`
+- `-serial stdio`
+- `-m 512`
+- `-M q35`
+- `-nographic`
+- `-no-reboot`
+
+## Run IPC Ping
+
+```bash
+./tools/lab/run-qemu.sh mosaicos-ipc-ping
+```
+
+Expected serial output includes:
+
+```text
+Receiver: Waiting for message...
+Sender: Sending message to receiver...
+Receiver: Received IPC from label ...
+MosaicOS Lab: IPC ping
+Sender: Message sent and reply received.
+```
+
+## Boot Configuration
+
+The lab boot entries live in `tools/lab/conf/mosaicos-lab.list`.
+
+- `mosaicos-hello` boots `moe`, starts `ned`, then runs `mosaic-hello`.
+- `mosaicos-ipc-ping` boots `moe`, starts `ned`, creates a `ping_server`
+  IPC gate, gives server rights to `ping-receiver`, and gives client rights to
+  `ping-sender`.
+
+The Lua configs are:
+
+- `tools/lab/conf/mosaicos-hello.cfg`
+- `tools/lab/conf/mosaicos-ipc-ping.cfg`
+
+To add a new task:
+
+1. Add a new experiment directory under `microkernel/experiments/`.
+2. Add a BID Makefile with `TARGET` and source files.
+3. Build it from `tools/lab/build-hello.sh` or a new script.
+4. Add the binary and optional Lua config to `tools/lab/conf/mosaicos-lab.list`.
+5. Run with `./tools/lab/run-qemu.sh <entry-name>`.
 
 ## Common Errors
-- **Missing dependencies:** Ensure all required packages are installed on your host.
-- **QEMU issues:** Ensure KVM is available if using `-enable-kvm`. For basic lab work, KVM is optional.
+
+- **`qemu-system-x86_64: command not found`:** install `qemu-system-x86`.
+- **GRUB/image generation errors:** install `grub-pc-bin`, `mtools`, and
+  `xorriso`.
+- **`../../mk/project.mk: No such file or directory`:** the checkout is only
+  `l4re-core`, not the full L4Re tree. Use the provided scripts so Ham
+  synchronizes `.lab/l4` and `.lab/fiasco`.
+- **Missing generated L4Re files:** run `./tools/lab/build-l4re.sh` before
+  building experiments.
+- **`gcc-16 is not supported`:** install `gcc-14 g++-14`, Arch/CachyOS
+  `gcc14`, or use Clang/LLD 21 or older. `env.sh` selects GCC 11-15 when
+  present and otherwise falls back to a supported Clang/LLD.
+- **Module not found at boot:** confirm the binary name appears in
+  `tools/lab/conf/mosaicos-lab.list` and that `MODULE_SEARCH_PATH` includes the
+  experiment directory. `run-qemu.sh` sets this automatically.
+- **No serial output:** keep the default `QEMU_OPTIONS`; replacing them must
+  preserve `-monitor none`, `-serial stdio`, `-M q35`, and a headless display
+  option for CI.
