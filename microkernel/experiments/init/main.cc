@@ -462,6 +462,16 @@ static int has_failed_services(const struct system_manifest *manifest)
   return 0;
 }
 
+static int has_defined_services(const struct system_manifest *manifest)
+{
+  for (unsigned i = 0; i < manifest->service_count; i++) {
+    if (manifest->services[i].state == STATE_DEFINED)
+      return 1;
+  }
+
+  return 0;
+}
+
 static int start_service(struct service_manifest *service)
 {
   char command[512];
@@ -501,7 +511,8 @@ static int start_service(struct service_manifest *service)
   return 0;
 }
 
-static int recover_service(struct service_manifest *service)
+static int recover_service(struct system_manifest *manifest,
+                           struct service_manifest *service)
 {
   unsigned attempts = 0;
   unsigned max_attempts = service->max_restarts + 1;
@@ -512,6 +523,8 @@ static int recover_service(struct service_manifest *service)
     if (attempts > 1) {
       service->state = STATE_RESTARTING;
       service->restart_count++;
+      printf("[CRASH] service=%s reason=TaskExit restart_count=%u action=restart\n",
+             service->name, service->restart_count);
       printf("mosaic-init: restarting service '%s' (%u/%u)\n",
              service->name, service->restart_count, service->max_restarts);
     }
@@ -527,22 +540,57 @@ static int recover_service(struct service_manifest *service)
   }
 
   service->state = STATE_FAILED;
+  printf("[CRASH] service=%s reason=TaskExit restart_count=%u action=failed\n",
+         service->name, service->restart_count);
   printf("mosaic-init: service '%s' marked failed after %u attempt(s)\n",
          service->name, attempts);
 
-  if (service->fallback[0] != '\0')
+  if (service->fallback[0] != '\0') {
+    int fallback_index = find_service(manifest, service->fallback);
+
     printf("mosaic-init: fallback '%s' is declared for service '%s'\n",
            service->fallback, service->name);
+
+    if (fallback_index < 0) {
+      printf("mosaic-init: fallback '%s' is not defined\n", service->fallback);
+      return 0;
+    }
+
+    struct service_manifest *fallback = &manifest->services[fallback_index];
+    if (fallback->state == STATE_RUNNING) {
+      printf("mosaic-init: fallback '%s' already running\n", fallback->name);
+      return 0;
+    }
+
+    if (fallback->state != STATE_DEFINED) {
+      printf("mosaic-init: fallback '%s' is %s and cannot be started\n",
+             fallback->name, state_name(fallback->state));
+      return 0;
+    }
+
+    if (!dependencies_running(manifest, fallback)) {
+      printf("mosaic-init: fallback '%s' dependencies are not running\n",
+             fallback->name);
+      return 0;
+    }
+
+    printf("[CRASH] service=%s reason=TaskExit restart_count=%u action=fallback:%s\n",
+           service->name, service->restart_count, fallback->name);
+    printf("mosaic-init: starting fallback '%s' for service '%s'\n",
+           fallback->name, service->name);
+
+    if (recover_service(manifest, fallback) == 0 && fallback->state == STATE_RUNNING)
+      printf("mosaic-init: fallback '%s' started\n", fallback->name);
+  }
 
   return 0;
 }
 
 static int start_services(struct system_manifest *manifest)
 {
-  unsigned completed = 0;
   unsigned round = 1;
 
-  while (completed < manifest->service_count) {
+  while (has_defined_services(manifest)) {
     int ready[MAX_SERVICES];
     unsigned started_this_round = 0;
 
@@ -557,17 +605,16 @@ static int start_services(struct system_manifest *manifest)
     for (unsigned i = 0; i < manifest->service_count; i++) {
       struct service_manifest *service = &manifest->services[i];
 
-      if (!ready[i])
+      if (!ready[i] || service->state != STATE_DEFINED)
         continue;
 
       printf("mosaic-init: starting service '%s'\n", service->name);
-      if (recover_service(service) != 0)
+      if (recover_service(manifest, service) != 0)
         return -1;
 
       if (service->state == STATE_RUNNING)
         printf("mosaic-init: service '%s' started\n", service->name);
       started_this_round++;
-      completed++;
     }
 
     print_status(manifest);

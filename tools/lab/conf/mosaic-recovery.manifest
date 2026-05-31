@@ -11,6 +11,13 @@ services:
       - logger
     recovery:
       max_restarts: 2
+      fallback: safe-gui
+
+  safe-gui:
+    binary: rom/mosaic-safe-gui
+    restart: never
+    requires:
+      - logger
 
   status:
     binary: rom/mosaic-status

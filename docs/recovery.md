@@ -39,14 +39,17 @@ When a service failure is detected, the Guardian follows this sequence:
 
 ## Current Prototype
 
-The current lab prototype implements the first restart path inside `mosaic-init`.
-For services that declare `restart: on-failure` or a non-zero
+The current lab prototype implements the first restart and fallback paths inside
+`mosaic-init`. For services that declare `restart: on-failure` or a non-zero
 `recovery.max_restarts`, `mosaic-init` starts the task through Ned, waits for its
-exit result, and restarts it until the configured retry budget is exhausted.
+exit result, and restarts it until the configured retry budget is exhausted. If
+the service declares `recovery.fallback`, `mosaic-init` starts that fallback after
+marking the original service `failed`.
 
 The `mosaicos-recovery` lab entry demonstrates this with `mosaic-crash`, a
-controlled service that exits with failure. The expected behavior is two restarts
-and a final `failed` state after the third failed attempt.
+controlled service that exits with failure. The expected behavior is two restarts,
+a final `failed` state after the third failed attempt, structured `[CRASH]`
+serial output, and activation of the `mosaic-safe-gui` fallback service.
 
 This is a recovery prototype, not the final Guardian/watchdog architecture. The
 next step is replacing synchronous exit monitoring with asynchronous heartbeats
