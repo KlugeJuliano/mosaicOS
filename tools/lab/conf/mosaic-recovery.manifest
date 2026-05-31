@@ -1,0 +1,19 @@
+# Milestone 4 recovery manifest.
+services:
+  logger:
+    binary: rom/mosaic-log
+    restart: never
+
+  crashy:
+    binary: rom/mosaic-crash
+    restart: on-failure
+    requires:
+      - logger
+    recovery:
+      max_restarts: 2
+
+  status:
+    binary: rom/mosaic-status
+    restart: never
+    requires:
+      - logger

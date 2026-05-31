@@ -9,6 +9,11 @@ Manifest validation rejects unknown dependencies, self-dependencies, duplicate
 dependencies, dependency cycles, missing binaries, unsafe service names/paths,
 and unsupported restart policies.
 
+For recovery experiments, services with `restart: on-failure` or non-zero
+`recovery.max_restarts` are launched with exit monitoring. `mosaic-init` waits on
+the Ned task handle, restarts failed services up to `max_restarts`, and marks the
+service `failed` when the retry budget is exhausted.
+
 The manifest subset supports multiple services, `binary`, `restart`, and
 `requires`:
 
@@ -36,6 +41,12 @@ Or run the automated lab check:
 
 ```bash
 ./tools/lab/test-service-manager.sh
+```
+
+Run the recovery prototype:
+
+```bash
+./tools/lab/test-recovery.sh
 ```
 
 Expected serial output includes:

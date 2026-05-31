@@ -48,3 +48,7 @@ The `requires` field ensures that services are started in the correct order. `mo
 
 ### Recovery Policy
 The `recovery` block defines how the system should handle persistent failures of a specific service. If `max_restarts` is reached, the system may switch to a `fallback` service or trigger a broader system recovery action.
+
+The current lab prototype supports `recovery.max_restarts` for services launched
+under exit monitoring. A service with `restart: on-failure` is relaunched until
+the retry budget is exhausted, then marked `failed`.

@@ -24,6 +24,17 @@ module mosaic-hello
 module mosaic-status
 module mosaic-crash
 
+entry mosaicos-recovery
+roottask moe rom/mosaicos-recovery.cfg
+module l4re
+module ned
+module mosaicos-recovery.cfg
+module mosaic-recovery.manifest
+module mosaic-init
+module mosaic-log
+module mosaic-status
+module mosaic-crash
+
 entry mosaicos-ipc-ping
 roottask moe rom/mosaicos-ipc-ping.cfg
 module l4re

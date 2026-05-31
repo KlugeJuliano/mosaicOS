@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <l4/ned/cmd_control>
@@ -14,6 +15,7 @@ enum service_state {
   STATE_DEFINED,
   STATE_STARTING,
   STATE_RUNNING,
+  STATE_RESTARTING,
   STATE_FAILED,
 };
 
@@ -21,8 +23,11 @@ struct service_manifest {
   char name[MAX_FIELD];
   char binary[MAX_FIELD];
   char restart[MAX_FIELD];
+  char fallback[MAX_FIELD];
   char dependencies[MAX_REQUIRES][MAX_FIELD];
   unsigned require_count;
+  unsigned max_restarts;
+  unsigned restart_count;
   enum service_state state;
 };
 
@@ -82,6 +87,8 @@ static const char *state_name(enum service_state state)
     return "starting";
   case STATE_RUNNING:
     return "running";
+  case STATE_RESTARTING:
+    return "restarting";
   case STATE_FAILED:
     return "failed";
   }
@@ -104,6 +111,27 @@ static int valid_restart_policy(const char *restart)
   return strcmp(restart, "never") == 0
          || strcmp(restart, "on-failure") == 0
          || strcmp(restart, "always") == 0;
+}
+
+static int service_needs_exit_monitor(const struct service_manifest *service)
+{
+  return strcmp(service->restart, "never") != 0 || service->max_restarts > 0;
+}
+
+static int parse_unsigned(const char *value, unsigned *result)
+{
+  char *end;
+  unsigned long parsed;
+
+  if (*value == '\0')
+    return -1;
+
+  parsed = strtoul(value, &end, 10);
+  if (*end != '\0' || parsed > 1000)
+    return -1;
+
+  *result = (unsigned)parsed;
+  return 0;
 }
 
 static int add_service(struct system_manifest *manifest, const char *name)
@@ -218,6 +246,7 @@ static int parse_manifest(FILE *file, struct system_manifest *manifest)
   int in_services = 0;
   int current = -1;
   int in_requires = 0;
+  int in_recovery = 0;
 
   memset(manifest, 0, sizeof(*manifest));
 
@@ -250,6 +279,9 @@ static int parse_manifest(FILE *file, struct system_manifest *manifest)
     }
 
     in_requires = 0;
+    if (in_recovery && indent != 6)
+      in_recovery = 0;
+
     separator = strchr(key, ':');
     if (separator == NULL) {
       printf("mosaic-init: manifest line %u is missing ':'\n", line_no);
@@ -277,7 +309,7 @@ static int parse_manifest(FILE *file, struct system_manifest *manifest)
       continue;
     }
 
-    if (current < 0 || indent != 4) {
+    if (current < 0 || (indent != 4 && !(in_recovery && indent == 6))) {
       printf("mosaic-init: unsupported manifest structure on line %u\n", line_no);
       return -1;
     }
@@ -296,6 +328,21 @@ static int parse_manifest(FILE *file, struct system_manifest *manifest)
       }
     } else if (strcmp(key, "requires") == 0 && value[0] == '\0') {
       in_requires = 1;
+    } else if (strcmp(key, "recovery") == 0 && value[0] == '\0') {
+      in_recovery = 1;
+    } else if (in_recovery && strcmp(key, "max_restarts") == 0) {
+      if (parse_unsigned(value, &manifest->services[current].max_restarts) != 0) {
+        printf("mosaic-init: invalid max_restarts for service '%s'\n",
+               manifest->services[current].name);
+        return -1;
+      }
+    } else if (in_recovery && strcmp(key, "fallback") == 0) {
+      if (strcmp(value, "null") != 0
+          && copy_field(manifest->services[current].fallback,
+                        sizeof(manifest->services[current].fallback), value) != 0) {
+        printf("mosaic-init: fallback service name is too long\n");
+        return -1;
+      }
     } else {
       printf("mosaic-init: unknown manifest key '%s' on line %u\n", key, line_no);
       return -1;
@@ -324,6 +371,19 @@ static int parse_manifest(FILE *file, struct system_manifest *manifest)
       printf("mosaic-init: service '%s' has invalid restart policy '%s'\n",
              service->name, service->restart);
       return -1;
+    }
+
+    if (service->fallback[0] != '\0') {
+      if (!is_safe_lua_string(service->fallback)) {
+        printf("mosaic-init: service '%s' has invalid fallback name\n", service->name);
+        return -1;
+      }
+
+      if (find_service(manifest, service->fallback) < 0) {
+        printf("mosaic-init: service '%s' has unknown fallback '%s'\n",
+               service->name, service->fallback);
+        return -1;
+      }
     }
 
     for (unsigned j = 0; j < service->require_count; j++) {
@@ -369,6 +429,14 @@ static void print_manifest(const struct system_manifest *manifest)
     printf("mosaic-init: service '%s' binary '%s' restart '%s'\n",
            service->name, service->binary, service->restart);
 
+    if (service->max_restarts > 0)
+      printf("mosaic-init: service '%s' max_restarts %u\n",
+             service->name, service->max_restarts);
+
+    if (service->fallback[0] != '\0')
+      printf("mosaic-init: service '%s' fallback '%s'\n",
+             service->name, service->fallback);
+
     for (unsigned j = 0; j < service->require_count; j++)
       printf("mosaic-init: service '%s' requires '%s'\n",
              service->name, service->dependencies[j]);
@@ -384,16 +452,35 @@ static void print_status(const struct system_manifest *manifest)
   }
 }
 
+static int has_failed_services(const struct system_manifest *manifest)
+{
+  for (unsigned i = 0; i < manifest->service_count; i++) {
+    if (manifest->services[i].state == STATE_FAILED)
+      return 1;
+  }
+
+  return 0;
+}
+
 static int start_service(struct service_manifest *service)
 {
   char command[512];
   long result;
   L4::Cap<L4Re::Ned::Cmd_control> ned;
 
-  snprintf(command, sizeof(command),
-           "local L4 = require('L4'); "
-           "L4.default_loader:start({ log = { '%s', 'green' } }, '%s')",
-           service->name, service->binary);
+  if (service_needs_exit_monitor(service)) {
+    snprintf(command, sizeof(command),
+             "local L4 = require('L4'); "
+             "local t = L4.default_loader:start({ log = { '%s', 'green' } }, '%s'); "
+             "local rc = t:wait(); "
+             "if rc ~= 0 then error('service %s exited with ' .. rc) end",
+             service->name, service->binary, service->name);
+  } else {
+    snprintf(command, sizeof(command),
+             "local L4 = require('L4'); "
+             "L4.default_loader:start({ log = { '%s', 'green' } }, '%s')",
+             service->name, service->binary);
+  }
 
   ned = L4Re::Env::env()->get_cap<L4Re::Ned::Cmd_control>("svr");
   if (!ned.is_valid()) {
@@ -414,12 +501,48 @@ static int start_service(struct service_manifest *service)
   return 0;
 }
 
+static int recover_service(struct service_manifest *service)
+{
+  unsigned attempts = 0;
+  unsigned max_attempts = service->max_restarts + 1;
+
+  while (attempts < max_attempts) {
+    attempts++;
+
+    if (attempts > 1) {
+      service->state = STATE_RESTARTING;
+      service->restart_count++;
+      printf("mosaic-init: restarting service '%s' (%u/%u)\n",
+             service->name, service->restart_count, service->max_restarts);
+    }
+
+    if (start_service(service) == 0)
+      return 0;
+
+    printf("mosaic-init: service '%s' failed during attempt %u\n",
+           service->name, attempts);
+
+    if (strcmp(service->restart, "never") == 0)
+      break;
+  }
+
+  service->state = STATE_FAILED;
+  printf("mosaic-init: service '%s' marked failed after %u attempt(s)\n",
+         service->name, attempts);
+
+  if (service->fallback[0] != '\0')
+    printf("mosaic-init: fallback '%s' is declared for service '%s'\n",
+           service->fallback, service->name);
+
+  return 0;
+}
+
 static int start_services(struct system_manifest *manifest)
 {
-  unsigned running = 0;
+  unsigned completed = 0;
   unsigned round = 1;
 
-  while (running < manifest->service_count) {
+  while (completed < manifest->service_count) {
     int ready[MAX_SERVICES];
     unsigned started_this_round = 0;
 
@@ -438,12 +561,13 @@ static int start_services(struct system_manifest *manifest)
         continue;
 
       printf("mosaic-init: starting service '%s'\n", service->name);
-      if (start_service(service) != 0)
+      if (recover_service(service) != 0)
         return -1;
 
-      printf("mosaic-init: service '%s' started\n", service->name);
+      if (service->state == STATE_RUNNING)
+        printf("mosaic-init: service '%s' started\n", service->name);
       started_this_round++;
-      running++;
+      completed++;
     }
 
     print_status(manifest);
@@ -489,7 +613,11 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  printf("mosaic-init: all services started\n");
+  if (has_failed_services(&manifest))
+    printf("mosaic-init: startup completed with failed services\n");
+  else
+    printf("mosaic-init: all services started\n");
+
   print_status(&manifest);
   return 0;
 }

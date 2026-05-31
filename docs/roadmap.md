@@ -42,6 +42,12 @@ MosaicOS is developed through a series of iterative milestones, moving from theo
 - **Objective:** Implement basic self-healing.
 - **Inputs:** Milestone 3 Service Manager.
 - **Outputs:** Guardian service, watchdog mechanism, restart logic.
+- **Current status:** Complete and validated in QEMU as a first recovery
+  prototype. `mosaic-init` monitors restart-enabled services through Ned task
+  exit status, restarts a controlled failing service according to
+  `recovery.max_restarts`, and marks it `failed` after the retry budget is
+  exhausted. Full asynchronous Guardian/watchdog heartbeats remain a future
+  evolution.
 - **Criteria:** A crashed service is automatically restarted by the Guardian.
 
 ### Milestone 5 — Graphical Prototype

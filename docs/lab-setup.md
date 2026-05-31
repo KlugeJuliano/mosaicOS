@@ -138,6 +138,38 @@ The test builds the experiments, boots `mosaicos-init`, captures QEMU serial
 output, and verifies the expected startup rounds, service states, and service
 messages. Set `KEEP_OUTPUT=1` to keep the captured serial log for inspection.
 
+## Run Recovery Prototype
+
+```bash
+./tools/lab/run-qemu.sh mosaicos-recovery
+```
+
+Expected serial output includes:
+
+```text
+mosaic-init: service 'crashy' max_restarts 2
+mosaic-init: starting service 'crashy'
+MosaicOS Lab: controlled crash service exiting with failure
+mosaic-init: service 'crashy' failed during attempt 1
+mosaic-init: restarting service 'crashy' (1/2)
+mosaic-init: service 'crashy' failed during attempt 2
+mosaic-init: restarting service 'crashy' (2/2)
+mosaic-init: service 'crashy' failed during attempt 3
+mosaic-init: service 'crashy' marked failed after 3 attempt(s)
+mosaic-init: status crashy       failed
+```
+
+To run the recovery check automatically:
+
+```bash
+./tools/lab/test-recovery.sh
+```
+
+The recovery prototype uses the Ned task handle to wait for services configured
+with restart/recovery policy, observes their exit result, and applies
+`recovery.max_restarts`. A future watchdog will replace this with asynchronous
+heartbeats for long-running services.
+
 ## Boot Configuration
 
 The lab boot entries live in `tools/lab/conf/mosaicos-lab.list`.
@@ -145,6 +177,8 @@ The lab boot entries live in `tools/lab/conf/mosaicos-lab.list`.
 - `mosaicos-hello` boots `moe`, starts `ned`, then runs `mosaic-hello`.
 - `mosaicos-init` boots `moe`, starts `ned`, then runs `mosaic-init` with a
   multi-service dependency manifest.
+- `mosaicos-recovery` boots `moe`, starts `ned`, then runs `mosaic-init` with a
+  manifest containing a controlled failing service and restart policy.
 - `mosaicos-ipc-ping` boots `moe`, starts `ned`, creates a `ping_server`
   IPC gate, gives server rights to `ping-receiver`, and gives client rights to
   `ping-sender`.
@@ -157,6 +191,7 @@ The Lua configs are:
 
 - `tools/lab/conf/mosaicos-hello.cfg`
 - `tools/lab/conf/mosaicos-init.cfg`
+- `tools/lab/conf/mosaicos-recovery.cfg`
 - `tools/lab/conf/mosaicos-ipc-ping.cfg`
 
 To add a new task:

@@ -37,6 +37,21 @@ When a service failure is detected, the Guardian follows this sequence:
 4. **Recovery Shell:** If the graphical environment is completely lost, provide a text-based emergency shell for manual diagnostics.
 5. **Rollback:** Revert to a previous known-good system snapshot.
 
+## Current Prototype
+
+The current lab prototype implements the first restart path inside `mosaic-init`.
+For services that declare `restart: on-failure` or a non-zero
+`recovery.max_restarts`, `mosaic-init` starts the task through Ned, waits for its
+exit result, and restarts it until the configured retry budget is exhausted.
+
+The `mosaicos-recovery` lab entry demonstrates this with `mosaic-crash`, a
+controlled service that exits with failure. The expected behavior is two restarts
+and a final `failed` state after the third failed attempt.
+
+This is a recovery prototype, not the final Guardian/watchdog architecture. The
+next step is replacing synchronous exit monitoring with asynchronous heartbeats
+and process-exit notifications for long-running services.
+
 ## Snapshot & Rollback
 MosaicOS supports atomic system snapshots. Before updates or major configuration changes, a snapshot is taken. If the system fails to reach a stable state, it can automatically rollback to the last successful boot configuration.
 
