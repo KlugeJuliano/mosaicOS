@@ -22,6 +22,7 @@ module mosaic-init
 module mosaic-log
 module mosaic-hello
 module mosaic-status
+module mosaic-crash
 
 entry mosaicos-ipc-ping
 roottask moe rom/mosaicos-ipc-ping.cfg

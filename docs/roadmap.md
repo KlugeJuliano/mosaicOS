@@ -33,7 +33,9 @@ MosaicOS is developed through a series of iterative milestones, moving from theo
 - **Current status:** Complete and validated in QEMU. `mosaic-init` parses a
   multi-service manifest, resolves `requires` dependencies by startup round,
   starts independent ready services in the same round, and prints observable
-  `defined`/`running`/`failed` service status.
+  `defined`/`running`/`failed` service status. The lab includes an automated
+  service-manager boot test and a controlled crash service for Milestone 4
+  recovery experiments.
 - **Criteria:** Services start in the correct order and their status is observable.
 
 ### Milestone 4 — Recovery Prototype

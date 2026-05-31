@@ -128,6 +128,16 @@ manifest starts `logger` first, then starts `hello` and `status` after their
 `requires: logger` dependency is running. `mosaic-init` prints the service states
 after each startup round.
 
+To run the same check automatically:
+
+```bash
+./tools/lab/test-service-manager.sh
+```
+
+The test builds the experiments, boots `mosaicos-init`, captures QEMU serial
+output, and verifies the expected startup rounds, service states, and service
+messages. Set `KEEP_OUTPUT=1` to keep the captured serial log for inspection.
+
 ## Boot Configuration
 
 The lab boot entries live in `tools/lab/conf/mosaicos-lab.list`.
@@ -138,6 +148,10 @@ The lab boot entries live in `tools/lab/conf/mosaicos-lab.list`.
 - `mosaicos-ipc-ping` boots `moe`, starts `ned`, creates a `ping_server`
   IPC gate, gives server rights to `ping-receiver`, and gives client rights to
   `ping-sender`.
+
+The `mosaicos-init` module set also includes `mosaic-crash`, a controlled failure
+service used by recovery experiments. It is built and present in ROM, but it is
+not started by the Milestone 3 manifest.
 
 The Lua configs are:
 

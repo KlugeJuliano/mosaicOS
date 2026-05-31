@@ -20,6 +20,10 @@ bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
 cd "$EXPERIMENTS_DIR/status"
 bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
 
+# Build controlled failure service for recovery experiments
+cd "$EXPERIMENTS_DIR/crash"
+bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
+
 # Build IPC Ping
 cd "$EXPERIMENTS_DIR/ipc-ping"
 bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"

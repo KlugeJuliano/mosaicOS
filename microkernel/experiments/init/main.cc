@@ -99,6 +99,13 @@ static int find_service(const struct system_manifest *manifest, const char *name
   return -1;
 }
 
+static int valid_restart_policy(const char *restart)
+{
+  return strcmp(restart, "never") == 0
+         || strcmp(restart, "on-failure") == 0
+         || strcmp(restart, "always") == 0;
+}
+
 static int add_service(struct system_manifest *manifest, const char *name)
 {
   struct service_manifest *service;
@@ -128,6 +135,19 @@ static int add_service(struct system_manifest *manifest, const char *name)
 
 static int add_requirement(struct service_manifest *service, const char *name)
 {
+  if (strcmp(service->name, name) == 0) {
+    printf("mosaic-init: service '%s' cannot require itself\n", service->name);
+    return -1;
+  }
+
+  for (unsigned i = 0; i < service->require_count; i++) {
+    if (strcmp(service->dependencies[i], name) == 0) {
+      printf("mosaic-init: service '%s' has duplicate dependency '%s'\n",
+             service->name, name);
+      return -1;
+    }
+  }
+
   if (service->require_count >= MAX_REQUIRES) {
     printf("mosaic-init: service '%s' has too many requirements\n", service->name);
     return -1;
@@ -140,6 +160,54 @@ static int add_requirement(struct service_manifest *service, const char *name)
   }
 
   service->require_count++;
+  return 0;
+}
+
+static int visit_dependencies(const struct system_manifest *manifest,
+                              unsigned service_index,
+                              int *visiting,
+                              int *visited)
+{
+  const struct service_manifest *service = &manifest->services[service_index];
+
+  if (visiting[service_index]) {
+    printf("mosaic-init: dependency cycle includes service '%s'\n", service->name);
+    return -1;
+  }
+
+  if (visited[service_index])
+    return 0;
+
+  visiting[service_index] = 1;
+
+  for (unsigned i = 0; i < service->require_count; i++) {
+    int dependency = find_service(manifest, service->dependencies[i]);
+
+    if (dependency < 0)
+      return -1;
+
+    if (visit_dependencies(manifest, (unsigned)dependency, visiting, visited) != 0)
+      return -1;
+  }
+
+  visiting[service_index] = 0;
+  visited[service_index] = 1;
+  return 0;
+}
+
+static int validate_dependency_cycles(const struct system_manifest *manifest)
+{
+  int visiting[MAX_SERVICES];
+  int visited[MAX_SERVICES];
+
+  memset(visiting, 0, sizeof(visiting));
+  memset(visited, 0, sizeof(visited));
+
+  for (unsigned i = 0; i < manifest->service_count; i++) {
+    if (visit_dependencies(manifest, i, visiting, visited) != 0)
+      return -1;
+  }
+
   return 0;
 }
 
@@ -252,6 +320,12 @@ static int parse_manifest(FILE *file, struct system_manifest *manifest)
       return -1;
     }
 
+    if (!valid_restart_policy(service->restart)) {
+      printf("mosaic-init: service '%s' has invalid restart policy '%s'\n",
+             service->name, service->restart);
+      return -1;
+    }
+
     for (unsigned j = 0; j < service->require_count; j++) {
       if (!is_safe_lua_string(service->dependencies[j])) {
         printf("mosaic-init: service '%s' has invalid dependency name\n", service->name);
@@ -265,6 +339,9 @@ static int parse_manifest(FILE *file, struct system_manifest *manifest)
       }
     }
   }
+
+  if (validate_dependency_cycles(manifest) != 0)
+    return -1;
 
   return 0;
 }

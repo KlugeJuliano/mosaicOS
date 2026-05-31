@@ -140,6 +140,7 @@ MosaicOS
 │
 └── docs/
     ├── architecture.md
+    ├── app-model.md
     ├── boot-flow.md
     ├── graphics-stack.md
     ├── service-model.md
@@ -344,58 +345,6 @@ Can Hurd-like translators be modernized for cloud storage, databases, APIs, and 
 Can automatic recovery be treated as a core OS feature instead of an external tool?
 Can a microkernel-based graphical system provide a practical developer experience?
 What are the trade-offs between performance, isolation, complexity, and compatibility?
-Initial Milestones
-Milestone 0 — Documentation and Architecture
- Write the project manifesto
- Define core principles
- Describe the conceptual architecture
- Document boot flow
- Define initial system configuration format
-Milestone 1 — L4Re Laboratory
- Build L4Re locally
- Run L4Re in QEMU
- Execute a basic hello world task
- Document the build and boot process
-Milestone 2 — Minimal Init
- Create a minimal mosaic-init
- Start one user-space service
- Add basic logging
- Define a simple service manifest
-Milestone 3 — Service Manager
- Start multiple services
- Track service status
- Restart failed services
- Add basic dependency ordering
-Milestone 4 — Recovery Prototype
- Add a watchdog
- Detect service failure
- Restart failed services
- Simulate a crash
- Record recovery logs
-Milestone 5 — Graphical Prototype
- Start a framebuffer display service
- Draw a basic screen
- Create a minimal compositor
- Display a simple graphical window
- Handle keyboard or mouse input
-Milestone 6 — Translator Prototype
- Implement a simple virtual filesystem translator
- Expose a resource as a directory
- Connect translator lifecycle to the service manager
-Milestone 7 — Container Prototype
- Define a minimal container manifest
- Start a native isolated process
- Restrict access through capabilities
- Add GUI permission rules
-Milestone 8 — WASM Runtime Experiment
- Run a simple WASM module
- Expose controlled system APIs
- Test WASM as a safe application runtime
-Milestone 9 — Linux Personality Research
- Study ELF loading
- Study basic Linux syscalls
- Implement write() and exit() experiments
- Attempt to run a very small Linux binary
 Non-Goals
 
 At the current stage, MosaicOS Lab does not aim to:
@@ -442,16 +391,3 @@ This project is a personal research journey into microkernels, service isolation
 The objective is not to build everything at once.
 
 The objective is to learn deeply, prototype carefully, document honestly, and explore what a modern operating system could become.
-
-License
-
-To be decided.
-
-Possible options:
-
-MIT
-BSD-2-Clause
-Apache-2.0
-GPL-3.0
-
-The final license should be chosen before code is added to the repository.

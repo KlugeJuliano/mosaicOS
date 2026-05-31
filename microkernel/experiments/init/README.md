@@ -5,6 +5,10 @@ small YAML-style manifest from L4Re ROM, validates service definitions, resolves
 `requires` dependencies, starts eligible services by dependency round, and prints
 an observable status table.
 
+Manifest validation rejects unknown dependencies, self-dependencies, duplicate
+dependencies, dependency cycles, missing binaries, unsafe service names/paths,
+and unsupported restart policies.
+
 The manifest subset supports multiple services, `binary`, `restart`, and
 `requires`:
 
@@ -26,6 +30,12 @@ Run it through the lab entry:
 ```bash
 ./tools/lab/build-hello.sh
 ./tools/lab/run-qemu.sh mosaicos-init
+```
+
+Or run the automated lab check:
+
+```bash
+./tools/lab/test-service-manager.sh
 ```
 
 Expected serial output includes:
