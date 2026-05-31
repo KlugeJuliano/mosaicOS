@@ -18,3 +18,6 @@ l4re-build/
 .vscode/
 .idea/
 *.swp
+
+# Local planning files
+/milestones/
