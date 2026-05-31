@@ -1,0 +1,5 @@
+# Minimal Milestone 2 service manifest.
+services:
+  hello:
+    binary: rom/mosaic-hello
+    restart: never

@@ -1,7 +1,8 @@
 # MosaicOS Lab - L4Re Setup Guide
 
-This guide establishes the Milestone 1 laboratory: build Fiasco.OC and L4Re,
-boot L4Re in QEMU, run a hello task, and validate basic IPC between two tasks.
+This guide establishes the Milestone 1 laboratory and the first Milestone 2
+experiment: build Fiasco.OC and L4Re, boot L4Re in QEMU, run a hello task,
+validate basic IPC between two tasks, and run the minimal `mosaic-init` flow.
 
 ## Host Requirements
 
@@ -53,8 +54,8 @@ From the repository root:
 
 `build-kernel.sh` installs the L4Re source tree with Ham when missing, then
 builds the Fiasco.OC kernel. `build-l4re.sh` configures and builds L4Re
-userland. `build-hello.sh` builds both local experiments using the L4Re BID
-make system.
+userland. `build-hello.sh` builds the local experiments using the L4Re BID make
+system.
 
 ## Run Hello
 
@@ -93,11 +94,36 @@ MosaicOS Lab: IPC ping
 Sender: Message sent and reply received.
 ```
 
+## Run Minimal Init
+
+```bash
+./tools/lab/run-qemu.sh mosaicos-init
+```
+
+Expected serial output includes:
+
+```text
+mosaic-init: starting
+mosaic-init: loading manifest rom/mosaic-init.manifest
+mosaic-init: service 'hello'
+mosaic-init: binary 'rom/mosaic-hello'
+mosaic-init: starting service 'hello'
+mosaic-init: service 'hello' started
+MosaicOS Lab: hello from L4Re
+```
+
+The manifest is `tools/lab/conf/mosaic-init.manifest` and uses the same
+YAML-style `services` shape described by the service-model documentation, limited
+to one service for this milestone. `mosaic-init` reads the manifest and uses its
+Ned command capability to request startup of the declared binary.
+
 ## Boot Configuration
 
 The lab boot entries live in `tools/lab/conf/mosaicos-lab.list`.
 
 - `mosaicos-hello` boots `moe`, starts `ned`, then runs `mosaic-hello`.
+- `mosaicos-init` boots `moe`, starts `ned`, then runs `mosaic-init` with a
+  single-service manifest.
 - `mosaicos-ipc-ping` boots `moe`, starts `ned`, creates a `ping_server`
   IPC gate, gives server rights to `ping-receiver`, and gives client rights to
   `ping-sender`.
@@ -105,6 +131,7 @@ The lab boot entries live in `tools/lab/conf/mosaicos-lab.list`.
 The Lua configs are:
 
 - `tools/lab/conf/mosaicos-hello.cfg`
+- `tools/lab/conf/mosaicos-init.cfg`
 - `tools/lab/conf/mosaicos-ipc-ping.cfg`
 
 To add a new task:

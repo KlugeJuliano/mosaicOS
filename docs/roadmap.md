@@ -20,6 +20,10 @@ MosaicOS is developed through a series of iterative milestones, moving from theo
 - **Objective:** Create the first service orchestrator.
 - **Inputs:** Milestone 1 environment.
 - **Outputs:** `mosaic-init` binary, simple service manifest parser.
+- **Current status:** Complete and validated in QEMU. Initial `mosaic-init`
+  parses a single-service YAML-style manifest in the L4Re lab entry
+  `mosaicos-init` and starts the declared service binary through its Ned command
+  capability.
 - **Criteria:** `mosaic-init` starts a single service from a configuration file.
 
 ### Milestone 3 — Service Manager

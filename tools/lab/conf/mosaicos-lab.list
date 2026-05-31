@@ -12,6 +12,15 @@ module ned
 module mosaicos-hello.cfg
 module mosaic-hello
 
+entry mosaicos-init
+roottask moe rom/mosaicos-init.cfg
+module l4re
+module ned
+module mosaicos-init.cfg
+module mosaic-init.manifest
+module mosaic-init
+module mosaic-hello
+
 entry mosaicos-ipc-ping
 roottask moe rom/mosaicos-ipc-ping.cfg
 module l4re
