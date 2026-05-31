@@ -1,8 +1,8 @@
 # MosaicOS Lab - L4Re Setup Guide
 
-This guide establishes the Milestone 1 laboratory and the first Milestone 2
-experiment: build Fiasco.OC and L4Re, boot L4Re in QEMU, run a hello task,
-validate basic IPC between two tasks, and run the minimal `mosaic-init` flow.
+This guide establishes the Milestone 1 laboratory and the early service-manager
+experiments: build Fiasco.OC and L4Re, boot L4Re in QEMU, run a hello task,
+validate basic IPC between two tasks, and run the `mosaic-init` service flow.
 
 ## Host Requirements
 
@@ -94,7 +94,7 @@ MosaicOS Lab: IPC ping
 Sender: Message sent and reply received.
 ```
 
-## Run Minimal Init
+## Run Service Manager
 
 ```bash
 ./tools/lab/run-qemu.sh mosaicos-init
@@ -105,17 +105,28 @@ Expected serial output includes:
 ```text
 mosaic-init: starting
 mosaic-init: loading manifest rom/mosaic-init.manifest
-mosaic-init: service 'hello'
-mosaic-init: binary 'rom/mosaic-hello'
+mosaic-init: loaded 3 service(s)
+mosaic-init: startup round 1
+mosaic-init: starting service 'logger'
+mosaic-init: service 'logger' started
+mosaic-init: startup round 2
 mosaic-init: starting service 'hello'
 mosaic-init: service 'hello' started
+mosaic-init: starting service 'status'
+mosaic-init: service 'status' started
+mosaic-init: status logger       running
+mosaic-init: status hello        running
+mosaic-init: status status       running
+MosaicOS Lab: log service online
 MosaicOS Lab: hello from L4Re
+MosaicOS Lab: status service online
 ```
 
 The manifest is `tools/lab/conf/mosaic-init.manifest` and uses the same
-YAML-style `services` shape described by the service-model documentation, limited
-to one service for this milestone. `mosaic-init` reads the manifest and uses its
-Ned command capability to request startup of the declared binary.
+YAML-style `services` shape described by the service-model documentation. The lab
+manifest starts `logger` first, then starts `hello` and `status` after their
+`requires: logger` dependency is running. `mosaic-init` prints the service states
+after each startup round.
 
 ## Boot Configuration
 
@@ -123,7 +134,7 @@ The lab boot entries live in `tools/lab/conf/mosaicos-lab.list`.
 
 - `mosaicos-hello` boots `moe`, starts `ned`, then runs `mosaic-hello`.
 - `mosaicos-init` boots `moe`, starts `ned`, then runs `mosaic-init` with a
-  single-service manifest.
+  multi-service dependency manifest.
 - `mosaicos-ipc-ping` boots `moe`, starts `ned`, creates a `ping_server`
   IPC gate, gives server rights to `ping-receiver`, and gives client rights to
   `ping-sender`.

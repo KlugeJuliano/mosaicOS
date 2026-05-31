@@ -19,7 +19,9 @@ module ned
 module mosaicos-init.cfg
 module mosaic-init.manifest
 module mosaic-init
+module mosaic-log
 module mosaic-hello
+module mosaic-status
 
 entry mosaicos-ipc-ping
 roottask moe rom/mosaicos-ipc-ping.cfg

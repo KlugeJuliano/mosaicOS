@@ -1,5 +1,17 @@
-# Minimal Milestone 2 service manifest.
+# Milestone 3 service manifest with dependency ordering.
 services:
+  logger:
+    binary: rom/mosaic-log
+    restart: never
+
   hello:
     binary: rom/mosaic-hello
     restart: never
+    requires:
+      - logger
+
+  status:
+    binary: rom/mosaic-status
+    restart: never
+    requires:
+      - logger
