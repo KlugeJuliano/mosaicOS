@@ -26,8 +26,11 @@ This document describes the sequence of events from hardware power-on to the ful
    - If a required service fails, `mosaic-init` consults the recovery policy.
 
 6. **Graphics Stack**
-   - `display-server` initializes the framebuffer.
-   - `compositor` and `input-server` start.
+    - `display-server` initializes the framebuffer.
+    - `compositor` and `input-server` start.
+    - In the current lab prototype `mosaic-display` maps the L4Re framebuffer for
+      a smoke frame, while compositor/input/app protocol events are still
+      serial-observable.
 
 7. **Desktop Shell**
    - Launches the graphical user interface.

@@ -3,7 +3,7 @@
 modaddr 0x01100000
 
 default-kernel fiasco -serial_esc
-default-bootstrap bootstrap
+default-bootstrap bootstrap vesa=0x115
 
 entry mosaicos-hello
 roottask moe rom/mosaicos-hello.cfg
@@ -35,6 +35,41 @@ module mosaic-log
 module mosaic-status
 module mosaic-crash
 module mosaic-safe-gui
+
+entry mosaicos-graphical
+roottask moe rom/mosaicos-graphical.cfg
+module l4re
+module ned
+module mosaicos-graphical.cfg
+module x86-fb.io
+module io
+module io/x86-legacy.devs
+module mosaic-graphical.manifest
+module mosaic-init
+module mosaic-log
+module mosaic-display
+module mosaic-input
+module mosaic-compositor
+module mosaic-safe-gui
+module mosaic-graphical-hello
+module mosaic-status
+
+entry mosaicos-graphical-recovery
+roottask moe rom/mosaicos-graphical-recovery.cfg
+module l4re
+module ned
+module mosaicos-graphical-recovery.cfg
+module x86-fb.io
+module io
+module io/x86-legacy.devs
+module mosaic-graphical-recovery.manifest
+module mosaic-init
+module mosaic-log
+module mosaic-display
+module mosaic-input
+module mosaic-compositor-crash
+module mosaic-safe-gui
+module mosaic-status
 
 entry mosaicos-ipc-ping
 roottask moe rom/mosaicos-ipc-ping.cfg

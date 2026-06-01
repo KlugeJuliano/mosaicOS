@@ -84,11 +84,17 @@ fi
 export LAB_DIR REPO_ROOT LAB_WORKDIR L4RE_DIR FIASCO_DIR BUILD_DIR
 export KERNEL_BUILD_DIR L4RE_BUILD_DIR LAB_CONF_DIR EXPERIMENTS_DIR
 export HAM_REPO L4RE_MANIFEST_REPO L4RE_ARCH L4RE_PLATFORM LAB_ENTRY JOBS
-export CC CXX LD HOST_CC HOST_CXX HOST_LD
 
 bid_make()
 {
-  env -u CC -u CXX -u LD -u HOST_CC -u HOST_CXX -u HOST_LD make "$@"
+  local make_args=(CROSS_COMPILE=)
+
+  if [ -n "${CC:-}" ]; then make_args+=(CC="$CC"); fi
+  if [ -n "${CXX:-}" ]; then make_args+=(CXX="$CXX"); fi
+  if [ -n "${LD:-}" ]; then make_args+=(LD="$LD"); fi
+
+  env -u CC -u CXX -u LD -u HOST_CC -u HOST_CXX -u HOST_LD \
+    make "${make_args[@]}" "$@"
 }
 
 ensure_l4re_sources()

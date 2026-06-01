@@ -28,6 +28,22 @@ bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
 cd "$EXPERIMENTS_DIR/safe-gui"
 bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
 
+# Build graphical prototype services
+cd "$EXPERIMENTS_DIR/display"
+bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
+
+cd "$EXPERIMENTS_DIR/input"
+bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
+
+cd "$EXPERIMENTS_DIR/compositor"
+bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
+
+cd "$EXPERIMENTS_DIR/compositor-crash"
+bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
+
+cd "$EXPERIMENTS_DIR/graphical-hello"
+bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
+
 # Build IPC Ping
 cd "$EXPERIMENTS_DIR/ipc-ping"
 bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"

@@ -212,6 +212,17 @@ To add a new task:
   synchronizes `.lab/l4` and `.lab/fiasco`.
 - **Missing generated L4Re files:** run `./tools/lab/build-l4re.sh` before
   building experiments.
+- **`Configured CC different than used one`:** rebuild L4Re with the selected
+  toolchain via `./tools/lab/build-l4re.sh`. If the build directory was created
+  with `sudo`, first fix ownership with
+  `sudo chown -R "$USER:$USER" .lab/build/l4re`.
+- **`CC specified in environment` / `LD specified in environment`:** unset those
+  variables before invoking L4Re make targets. The lab scripts sanitize toolchain
+  variables internally and use `.lab/build/l4re/Makeconf.local` for persistent
+  L4Re tool overrides when needed.
+- **Graphical lab cannot find `fb-drv`:** the current lab does not require
+  `fb-drv`. `mosaic-display` uses `L4.Env.vesa` when available and otherwise
+  logs a diagnostic while serial-observable graphical tests continue.
 - **`gcc-16 is not supported`:** install `gcc-14 g++-14`, Arch/CachyOS
   `gcc14`, or use Clang/LLD 21 or older. `env.sh` selects GCC 11-15 when
   present and otherwise falls back to a supported Clang/LLD.
@@ -221,3 +232,7 @@ To add a new task:
 - **No serial output:** keep the default `QEMU_OPTIONS`; replacing them must
   preserve `-monitor none`, `-serial stdio`, `-M q35`, and a headless display
   option for CI.
+- **Graphical tests time out under GTK:** `test-graphical.sh` and
+  `test-graphical-recovery.sh` force headless QEMU by default so serial output is
+  deterministic. Use `./tools/lab/run-qemu.sh mosaicos-graphical` directly when
+  you want an interactive GTK framebuffer window.
