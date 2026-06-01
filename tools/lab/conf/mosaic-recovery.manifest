@@ -16,6 +16,7 @@ services:
   safe-gui:
     binary: rom/mosaic-safe-gui
     restart: never
+    start: manual
     requires:
       - logger
 

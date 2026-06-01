@@ -56,7 +56,16 @@ MosaicOS is developed through a series of iterative milestones, moving from theo
 - **Objective:** Boot into a graphical environment.
 - **Inputs:** Milestone 4 system.
 - **Outputs:** Framebuffer display server, minimal compositor, input handler.
-- **Criteria:** System boots to a screen with a rendered window and mouse cursor.
+- **Current status:** Implemented as a serial-observable L4Re lab prototype.
+  The lab now starts display, input, compositor, safe-gui, and graphical hello
+  services; injects `L4.Env.vesa` into `mosaic-display` when available for a
+  real framebuffer smoke frame; emits deterministic frame/window/input events;
+  and validates the compositor crash path through restart exhaustion and
+  safe-gui fallback. Full compositor/display IPC, mandatory framebuffer
+  availability, and hardware input routing remain the next graphical evolution.
+- **Criteria:** The graphical lab boots the stack, renders an observable
+  `MosaicOS Hello` frame event, handles a representative `Q` input event, and
+  falls back to safe-gui when the compositor exhausts its restart budget.
 
 ### Milestone 6 — Translator Prototype
 - **Objective:** Explore Hurd-inspired filesystem abstraction.

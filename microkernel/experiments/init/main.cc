@@ -10,6 +10,7 @@
 #define MAX_FIELD 128
 #define MAX_SERVICES 8
 #define MAX_REQUIRES 4
+#define MAX_CAPABILITIES 4
 
 enum service_state {
   STATE_DEFINED,
@@ -23,9 +24,12 @@ struct service_manifest {
   char name[MAX_FIELD];
   char binary[MAX_FIELD];
   char restart[MAX_FIELD];
+  char start[MAX_FIELD];
   char fallback[MAX_FIELD];
   char dependencies[MAX_REQUIRES][MAX_FIELD];
+  char capabilities[MAX_CAPABILITIES][MAX_FIELD];
   unsigned require_count;
+  unsigned capability_count;
   unsigned max_restarts;
   unsigned restart_count;
   enum service_state state;
@@ -113,6 +117,11 @@ static int valid_restart_policy(const char *restart)
          || strcmp(restart, "always") == 0;
 }
 
+static int valid_start_policy(const char *start)
+{
+  return strcmp(start, "auto") == 0 || strcmp(start, "manual") == 0;
+}
+
 static int service_needs_exit_monitor(const struct service_manifest *service)
 {
   return strcmp(service->restart, "never") != 0 || service->max_restarts > 0;
@@ -156,6 +165,7 @@ static int add_service(struct system_manifest *manifest, const char *name)
   }
 
   copy_field(service->restart, sizeof(service->restart), "never");
+  copy_field(service->start, sizeof(service->start), "auto");
   service->state = STATE_DEFINED;
   manifest->service_count++;
   return (int)(manifest->service_count - 1);
@@ -188,6 +198,31 @@ static int add_requirement(struct service_manifest *service, const char *name)
   }
 
   service->require_count++;
+  return 0;
+}
+
+static int add_capability(struct service_manifest *service, const char *name)
+{
+  for (unsigned i = 0; i < service->capability_count; i++) {
+    if (strcmp(service->capabilities[i], name) == 0) {
+      printf("mosaic-init: service '%s' has duplicate capability '%s'\n",
+             service->name, name);
+      return -1;
+    }
+  }
+
+  if (service->capability_count >= MAX_CAPABILITIES) {
+    printf("mosaic-init: service '%s' has too many capabilities\n", service->name);
+    return -1;
+  }
+
+  if (copy_field(service->capabilities[service->capability_count],
+                 sizeof(service->capabilities[service->capability_count]), name) != 0) {
+    printf("mosaic-init: capability name is too long\n");
+    return -1;
+  }
+
+  service->capability_count++;
   return 0;
 }
 
@@ -246,6 +281,7 @@ static int parse_manifest(FILE *file, struct system_manifest *manifest)
   int in_services = 0;
   int current = -1;
   int in_requires = 0;
+  int in_capabilities = 0;
   int in_recovery = 0;
 
   memset(manifest, 0, sizeof(*manifest));
@@ -278,7 +314,22 @@ static int parse_manifest(FILE *file, struct system_manifest *manifest)
       continue;
     }
 
+    if (in_capabilities && indent == 6 && key[0] == '-') {
+      char *capability = trim(key + 1);
+
+      if (*capability == '\0') {
+        printf("mosaic-init: empty capability on line %u\n", line_no);
+        return -1;
+      }
+
+      if (add_capability(&manifest->services[current], capability) != 0)
+        return -1;
+
+      continue;
+    }
+
     in_requires = 0;
+    in_capabilities = 0;
     if (in_recovery && indent != 6)
       in_recovery = 0;
 
@@ -326,8 +377,16 @@ static int parse_manifest(FILE *file, struct system_manifest *manifest)
         printf("mosaic-init: restart policy is too long\n");
         return -1;
       }
+    } else if (strcmp(key, "start") == 0) {
+      if (copy_field(manifest->services[current].start,
+                     sizeof(manifest->services[current].start), value) != 0) {
+        printf("mosaic-init: start policy is too long\n");
+        return -1;
+      }
     } else if (strcmp(key, "requires") == 0 && value[0] == '\0') {
       in_requires = 1;
+    } else if (strcmp(key, "capabilities") == 0 && value[0] == '\0') {
+      in_capabilities = 1;
     } else if (strcmp(key, "recovery") == 0 && value[0] == '\0') {
       in_recovery = 1;
     } else if (in_recovery && strcmp(key, "max_restarts") == 0) {
@@ -373,6 +432,12 @@ static int parse_manifest(FILE *file, struct system_manifest *manifest)
       return -1;
     }
 
+    if (!valid_start_policy(service->start)) {
+      printf("mosaic-init: service '%s' has invalid start policy '%s'\n",
+             service->name, service->start);
+      return -1;
+    }
+
     if (service->fallback[0] != '\0') {
       if (!is_safe_lua_string(service->fallback)) {
         printf("mosaic-init: service '%s' has invalid fallback name\n", service->name);
@@ -395,6 +460,13 @@ static int parse_manifest(FILE *file, struct system_manifest *manifest)
       if (find_service(manifest, service->dependencies[j]) < 0) {
         printf("mosaic-init: service '%s' requires unknown service '%s'\n",
                service->name, service->dependencies[j]);
+        return -1;
+      }
+    }
+
+    for (unsigned j = 0; j < service->capability_count; j++) {
+      if (!is_safe_lua_string(service->capabilities[j])) {
+        printf("mosaic-init: service '%s' has invalid capability name\n", service->name);
         return -1;
       }
     }
@@ -426,8 +498,8 @@ static void print_manifest(const struct system_manifest *manifest)
   for (unsigned i = 0; i < manifest->service_count; i++) {
     const struct service_manifest *service = &manifest->services[i];
 
-    printf("mosaic-init: service '%s' binary '%s' restart '%s'\n",
-           service->name, service->binary, service->restart);
+    printf("mosaic-init: service '%s' binary '%s' restart '%s' start '%s'\n",
+           service->name, service->binary, service->restart, service->start);
 
     if (service->max_restarts > 0)
       printf("mosaic-init: service '%s' max_restarts %u\n",
@@ -440,7 +512,31 @@ static void print_manifest(const struct system_manifest *manifest)
     for (unsigned j = 0; j < service->require_count; j++)
       printf("mosaic-init: service '%s' requires '%s'\n",
              service->name, service->dependencies[j]);
+
+    for (unsigned j = 0; j < service->capability_count; j++)
+      printf("mosaic-init: service '%s' capability '%s'\n",
+             service->name, service->capabilities[j]);
   }
+}
+
+static void append_service_caps(char *command, size_t command_size,
+                                const struct service_manifest *service)
+{
+  if (service->capability_count == 0)
+    return;
+
+  strncat(command, ", caps = { ", command_size - strlen(command) - 1);
+  for (unsigned i = 0; i < service->capability_count; i++) {
+    if (i > 0)
+      strncat(command, ", ", command_size - strlen(command) - 1);
+
+    strncat(command, "['", command_size - strlen(command) - 1);
+    strncat(command, service->capabilities[i], command_size - strlen(command) - 1);
+    strncat(command, "'] = L4.Env['", command_size - strlen(command) - 1);
+    strncat(command, service->capabilities[i], command_size - strlen(command) - 1);
+    strncat(command, "']", command_size - strlen(command) - 1);
+  }
+  strncat(command, " }", command_size - strlen(command) - 1);
 }
 
 static void print_status(const struct system_manifest *manifest)
@@ -465,7 +561,8 @@ static int has_failed_services(const struct system_manifest *manifest)
 static int has_defined_services(const struct system_manifest *manifest)
 {
   for (unsigned i = 0; i < manifest->service_count; i++) {
-    if (manifest->services[i].state == STATE_DEFINED)
+    if (manifest->services[i].state == STATE_DEFINED
+        && strcmp(manifest->services[i].start, "manual") != 0)
       return 1;
   }
 
@@ -475,21 +572,26 @@ static int has_defined_services(const struct system_manifest *manifest)
 static int start_service(struct service_manifest *service)
 {
   char command[512];
+  char options[256];
   long result;
   L4::Cap<L4Re::Ned::Cmd_control> ned;
+
+  snprintf(options, sizeof(options), "{ log = { '%s', 'green' }", service->name);
+  append_service_caps(options, sizeof(options), service);
+  strncat(options, " }", sizeof(options) - strlen(options) - 1);
 
   if (service_needs_exit_monitor(service)) {
     snprintf(command, sizeof(command),
              "local L4 = require('L4'); "
-             "local t = L4.default_loader:start({ log = { '%s', 'green' } }, '%s'); "
+             "local t = L4.default_loader:start(%s, '%s'); "
              "local rc = t:wait(); "
              "if rc ~= 0 then error('service %s exited with ' .. rc) end",
-             service->name, service->binary, service->name);
+             options, service->binary, service->name);
   } else {
     snprintf(command, sizeof(command),
              "local L4 = require('L4'); "
-             "L4.default_loader:start({ log = { '%s', 'green' } }, '%s')",
-             service->name, service->binary);
+             "L4.default_loader:start(%s, '%s')",
+             options, service->binary);
   }
 
   ned = L4Re::Env::env()->get_cap<L4Re::Ned::Cmd_control>("svr");
@@ -599,7 +701,9 @@ static int start_services(struct system_manifest *manifest)
     for (unsigned i = 0; i < manifest->service_count; i++) {
       const struct service_manifest *service = &manifest->services[i];
 
-      ready[i] = service->state == STATE_DEFINED && dependencies_running(manifest, service);
+      ready[i] = service->state == STATE_DEFINED
+                 && strcmp(service->start, "manual") != 0
+                 && dependencies_running(manifest, service);
     }
 
     for (unsigned i = 0; i < manifest->service_count; i++) {
