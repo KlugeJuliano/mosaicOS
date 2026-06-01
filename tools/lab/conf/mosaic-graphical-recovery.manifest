@@ -1,0 +1,42 @@
+# Milestone 5 compositor recovery manifest.
+services:
+  logger:
+    binary: rom/mosaic-log
+    restart: never
+
+  display:
+    binary: rom/mosaic-display
+    restart: never
+    capabilities:
+      - fb
+    requires:
+      - logger
+
+  input:
+    binary: rom/mosaic-input
+    restart: never
+    requires:
+      - logger
+
+  compositor:
+    binary: rom/mosaic-compositor-crash
+    restart: on-failure
+    requires:
+      - display
+      - input
+    recovery:
+      max_restarts: 3
+      fallback: safe-gui
+
+  safe-gui:
+    binary: rom/mosaic-safe-gui
+    restart: never
+    start: manual
+    requires:
+      - display
+
+  status:
+    binary: rom/mosaic-status
+    restart: never
+    requires:
+      - logger

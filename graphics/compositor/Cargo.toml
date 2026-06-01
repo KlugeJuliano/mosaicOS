@@ -1,0 +1,13 @@
+[package]
+name = "mosaic-compositor"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["staticlib"]
+
+[dependencies]
+l4_rust = { path = "../../sdk/l4-rust" }
+mosaic-gui-sdk = { path = "../../sdk/gui-sdk" }
+alloc = { version = "1.0", optional = true } # Assuming we might need alloc for window list

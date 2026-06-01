@@ -24,24 +24,21 @@ bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
 cd "$EXPERIMENTS_DIR/crash"
 bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
 
-# Build fallback service for recovery experiments
+# Build graphical prototype services (Rust-based)
+cd "$REPO_ROOT/graphics/display-server"
+bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
+
+cd "$REPO_ROOT/graphics/input-server"
+bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
+
+cd "$REPO_ROOT/graphics/compositor"
+bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
+
+cd "$REPO_ROOT/shell/apps/mosaic-hello"
+bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
+
+# Build legacy/simulation components if needed
 cd "$EXPERIMENTS_DIR/safe-gui"
-bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
-
-# Build graphical prototype services
-cd "$EXPERIMENTS_DIR/display"
-bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
-
-cd "$EXPERIMENTS_DIR/input"
-bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
-
-cd "$EXPERIMENTS_DIR/compositor"
-bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
-
-cd "$EXPERIMENTS_DIR/compositor-crash"
-bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
-
-cd "$EXPERIMENTS_DIR/graphical-hello"
 bid_make L4DIR="$L4RE_DIR" OBJ_BASE="$L4RE_BUILD_DIR"
 
 # Build IPC Ping

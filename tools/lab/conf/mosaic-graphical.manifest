@@ -1,0 +1,47 @@
+# Milestone 5 graphical prototype manifest.
+services:
+  logger:
+    binary: rom/mosaic-log
+    restart: never
+
+  display:
+    binary: rom/mosaic-display
+    restart: never
+    capabilities:
+      - fb
+    requires:
+      - logger
+
+  input:
+    binary: rom/mosaic-input
+    restart: never
+    requires:
+      - logger
+
+  compositor:
+    binary: rom/mosaic-compositor
+    restart: never
+    requires:
+      - display
+      - input
+    recovery:
+      fallback: safe-gui
+
+  safe-gui:
+    binary: rom/mosaic-safe-gui
+    restart: never
+    start: manual
+    requires:
+      - display
+
+  hello-gui:
+    binary: rom/mosaic-graphical-hello
+    restart: never
+    requires:
+      - compositor
+
+  status:
+    binary: rom/mosaic-status
+    restart: never
+    requires:
+      - logger

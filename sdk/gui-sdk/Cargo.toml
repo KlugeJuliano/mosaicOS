@@ -1,0 +1,10 @@
+[package]
+name = "mosaic-gui-sdk"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+l4-rust = { path = "../l4-rust" }
