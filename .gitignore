@@ -4,6 +4,7 @@
 build/
 bin/
 obj/
+target/
 
 # L4Re specific
 l4re-build/

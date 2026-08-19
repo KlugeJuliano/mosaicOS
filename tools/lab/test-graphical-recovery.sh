@@ -46,6 +46,7 @@ fi
 require_line "mosaic-init: loaded 6 service(s)"
 require_line "mosaic-init: service 'compositor' max_restarts 3"
 require_line "mosaic-init: service 'compositor' fallback 'safe-gui'"
+require_line "MosaicOS Graphics: display-server runtime=rust"
 require_line "MosaicOS Graphics: compositor controlled crash requested"
 require_line "[CRASH] service=compositor reason=TaskExit restart_count=1 action=restart"
 require_line "[CRASH] service=compositor reason=TaskExit restart_count=2 action=restart"

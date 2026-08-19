@@ -236,14 +236,13 @@ sdk/
         └── font.rs
 ```
 
-The current L4Re lab implementation uses services under `microkernel/experiments/`.
-`mosaic-display` is the first real framebuffer smoke test: graphical lab entries
-start L4Re `io`, use `L4.Env.vesa` when the platform exposes it, pass an `fb`
-capability through `mosaic-init`, map the Goos framebuffer, draw a dark desktop
-plus window-shaped frame, and refresh the view. If no framebuffer capability is
-available, `mosaic-display` logs a diagnostic and the serial-observable test path
-continues. Other graphical services still emit serial-observable protocol events
-until compositor/display IPC is implemented.
+The current L4Re lab starts the Rust packages in `graphics/display-server/`,
+`graphics/input-server/`, `graphics/compositor/`, and
+`shell/apps/mosaic-hello/`. They emit deterministic serial-observable protocol
+events while the lab gains the capability routing required for real display IPC,
+shared buffers, and hardware input. The controlled crash and safe-gui fallback
+remain small C experiments under `microkernel/experiments/` because they exercise
+the recovery path independently from the graphical services.
 
 ## 11. Milestone 5 Completion Criteria
 
