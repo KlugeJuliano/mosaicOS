@@ -20,6 +20,7 @@ pub const L4_CAP_SHIFT: usize = 12;
 pub const L4_INVALID_CAP: l4_cap_idx_t = !0;
 
 extern "C" {
+    pub fn puts(s: *const c_char) -> i32;
     pub fn l4_utcb() -> *mut l4_utcb_t;
     pub fn l4re_env_get_cap(name: *const c_char) -> l4_cap_idx_t;
     pub fn l4_ipc_call(

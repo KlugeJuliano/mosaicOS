@@ -45,6 +45,7 @@ fi
 
 require_line "mosaic-init: loaded 7 service(s)"
 require_line "mosaic-init: service 'display' capability 'fb'"
+require_line "MosaicOS Graphics: display-server runtime=rust"
 require_line "MosaicOS Graphics: framebuffer owner ready"
 require_line "MosaicOS Graphics: input-server online keyboard=ps2 mouse=ps2"
 require_line "MosaicOS Graphics: compositor online target_fps=30"

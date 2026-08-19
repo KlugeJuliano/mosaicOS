@@ -5,7 +5,7 @@ source "$(dirname "$0")/env.sh"
 
 ENTRY="${1:-$LAB_ENTRY}"
 MODULES_LIST="${MODULES_LIST:-$LAB_CONF_DIR/mosaicos-lab.list}"
-MODULE_SEARCH_PATH="${MODULE_SEARCH_PATH:-$LAB_CONF_DIR:$EXPERIMENTS_DIR/hello:$EXPERIMENTS_DIR/init:$EXPERIMENTS_DIR/log:$EXPERIMENTS_DIR/status:$EXPERIMENTS_DIR/crash:$EXPERIMENTS_DIR/safe-gui:$EXPERIMENTS_DIR/display:$EXPERIMENTS_DIR/input:$EXPERIMENTS_DIR/compositor:$EXPERIMENTS_DIR/compositor-crash:$EXPERIMENTS_DIR/graphical-hello:$EXPERIMENTS_DIR/ipc-ping:$KERNEL_BUILD_DIR}"
+MODULE_SEARCH_PATH="${MODULE_SEARCH_PATH:-$LAB_CONF_DIR:$EXPERIMENTS_DIR/hello:$EXPERIMENTS_DIR/init:$EXPERIMENTS_DIR/log:$EXPERIMENTS_DIR/status:$EXPERIMENTS_DIR/crash:$EXPERIMENTS_DIR/safe-gui:$EXPERIMENTS_DIR/compositor-crash:$EXPERIMENTS_DIR/ipc-ping:$REPO_ROOT/graphics/display-server:$REPO_ROOT/graphics/input-server:$REPO_ROOT/graphics/compositor:$REPO_ROOT/shell/apps/mosaic-hello:$KERNEL_BUILD_DIR}"
 if [ -z "${QEMU_OPTIONS:-}" ]; then
   case "$ENTRY" in
     mosaicos-graphical|mosaicos-graphical-recovery)

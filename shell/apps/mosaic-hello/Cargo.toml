@@ -8,5 +8,5 @@ path = "src/lib.rs"
 crate-type = ["staticlib"]
 
 [dependencies]
-l4_rust = { path = "../../../sdk/l4-rust" }
+l4-rust = { path = "../../../sdk/l4-rust" }
 mosaic-gui-sdk = { path = "../../../sdk/gui-sdk" }

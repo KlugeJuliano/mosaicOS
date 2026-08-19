@@ -5,6 +5,7 @@ pub mod sys;
 use core::ffi::CStr;
 use sys::*;
 
+#[derive(Clone, Copy)]
 pub struct Cap(pub l4_cap_idx_t);
 
 impl Cap {
@@ -105,4 +106,10 @@ impl Input {
 
 pub fn sleep(ms: u32) {
     unsafe { sys::l4_sleep(ms) };
+}
+
+pub fn console_log(message: &'static [u8]) {
+    unsafe {
+        sys::puts(message.as_ptr().cast());
+    }
 }
