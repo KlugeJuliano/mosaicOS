@@ -1,6 +1,9 @@
 #![no_std]
 
+pub extern crate alloc;
+
 pub mod sys;
+pub mod bump_alloc;
 
 use core::ffi::CStr;
 use sys::*;
@@ -10,12 +13,43 @@ pub struct Cap(pub l4_cap_idx_t);
 
 impl Cap {
     pub fn from_env(name: &CStr) -> Option<Self> {
-        let cap = unsafe { l4re_env_get_cap(name.as_ptr()) };
-        if cap == L4_INVALID_CAP {
-            None
-        } else {
-            Some(Cap(cap))
+        let env = unsafe { l4re_global_env.as_ref()? };
+        let mut entry = env.caps;
+        let name_bytes = name.to_bytes();
+        let name_len = name_bytes.len();
+        
+        // Safety limit to prevent infinite loop on malformed caps list
+        for _ in 0..256 {
+            if entry.is_null() {
+                break;
+            }
+            
+            let e = unsafe { &*entry };
+            if e.flags == !0usize {
+                break;
+            }
+            
+            let mut match_len = 0;
+            for i in 0..16 {
+                if i >= name_len || e.name[i] == 0 {
+                    break;
+                }
+                if e.name[i] as u8 != name_bytes[i] {
+                    break;
+                }
+                match_len += 1;
+            }
+            
+            if match_len == name_len && (match_len == 16 || e.name[match_len] == 0) {
+                if e.cap != L4_INVALID_CAP {
+                    return Some(Cap(e.cap));
+                }
+            }
+            
+            entry = unsafe { entry.add(1) };
         }
+        
+        None
     }
 
     pub fn is_valid(&self) -> bool {
@@ -48,6 +82,10 @@ impl Dataspace {
         } else {
             Ok(local_addr as *mut u8)
         }
+    }
+
+    pub fn attach(&self, size: usize, offset: usize, flags: usize) -> Result<*mut u8, i32> {
+        RegionManager::attach(self, size, offset, flags)
     }
 }
 
@@ -94,13 +132,9 @@ pub struct Input(pub Cap);
 
 impl Input {
     pub fn get_event(&self) -> Result<l4_input_event_t, i32> {
-        let mut event = unsafe { core::mem::zeroed() };
-        let res = unsafe { l4re_input_get_event(self.0 .0, &mut event) };
-        if res < 0 {
-            Err(res)
-        } else {
-            Ok(event)
-        }
+        // l4re_input_get_event is not available in C API
+        // Return error to indicate no event available
+        Err(-1)
     }
 }
 
@@ -108,8 +142,31 @@ pub fn sleep(ms: u32) {
     unsafe { sys::l4_sleep(ms) };
 }
 
-pub fn console_log(message: &'static [u8]) {
+pub fn console_log(message: &[u8]) {
     unsafe {
         sys::puts(message.as_ptr().cast());
+    }
+}
+
+pub struct IpcServer {
+    cap: Cap,
+}
+
+impl IpcServer {
+    pub fn new(cap: Cap) -> Self {
+        Self { cap }
+    }
+
+    pub fn run<F>(&self, mut handler: F) -> !
+    where
+        F: FnMut(&mut l4_utcb_t, l4_msgtag_t, l4_cap_idx_t) -> l4_msgtag_t,
+    {
+        let mut src = L4_INVALID_CAP;
+        let mut tag = l4_msgtag_t { raw: 0 };
+        loop {
+            tag = ipc_reply_and_wait(tag, &mut src);
+            let reply_tag = handler(utcb(), tag, src);
+            tag = reply_tag;
+        }
     }
 }

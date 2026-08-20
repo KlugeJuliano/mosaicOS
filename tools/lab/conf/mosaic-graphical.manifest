@@ -9,6 +9,8 @@ services:
     restart: never
     capabilities:
       - fb
+      - fb_ds
+      - display_srv
     requires:
       - logger
 
@@ -17,6 +19,8 @@ services:
     restart: never
     requires:
       - logger
+    capabilities:
+      - compositor
 
   compositor:
     binary: rom/mosaic-compositor
@@ -26,6 +30,12 @@ services:
       - input
     recovery:
       fallback: safe-gui
+    capabilities:
+      - fb
+      - fb_ds
+      - display
+      - compositor_srv
+      - hello
 
   safe-gui:
     binary: rom/mosaic-safe-gui
@@ -39,6 +49,9 @@ services:
     restart: never
     requires:
       - compositor
+    capabilities:
+      - compositor
+      - hello_srv
 
   status:
     binary: rom/mosaic-status
