@@ -23,6 +23,11 @@ int rust_l4re_video_goos_info(l4re_video_goos_t goos,
     return l4re_video_goos_info(goos, ginfo);
 }
 
+int rust_l4re_video_goos_get_static_buffer(l4re_video_goos_t goos, unsigned idx,
+                                           l4_cap_idx_t buffer) {
+    return l4re_video_goos_get_static_buffer(goos, idx, buffer);
+}
+
 int rust_l4re_video_goos_refresh(l4re_video_goos_t goos, int x, int y, int w, int h) {
     return l4re_video_goos_refresh(goos, x, y, w, h);
 }

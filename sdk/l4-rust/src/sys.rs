@@ -62,10 +62,7 @@ extern "C" {
     #[link_name = "rust_l4re_video_goos_info"]
     pub fn l4re_video_goos_get_info(
         goos: l4_cap_idx_t,
-        width: *mut u32,
-        height: *mut u32,
-        bpp: *mut u8,
-        pitch: *mut u32,
+        ginfo: *mut l4re_video_goos_info_t,
     ) -> i32;
 
     #[link_name = "rust_l4re_video_goos_refresh"]
@@ -74,11 +71,46 @@ extern "C" {
         x: u32, y: u32, w: u32, h: u32
     ) -> i32;
 
+    #[link_name = "rust_l4re_video_goos_get_static_buffer"]
+    pub fn l4re_video_goos_get_static_buffer(
+        goos: l4_cap_idx_t,
+        idx: u32,
+        buffer: *mut l4_cap_idx_t,
+    ) -> i32;
+
     #[link_name = "rust_l4re_env_get_cap"]
     pub fn l4re_env_get_cap(name: *const c_char) -> l4_cap_idx_t;
 
     pub fn l4_sleep(ms: u32);
 }
+
+// Video Goos structures
+#[repr(C, packed)]
+pub struct l4re_video_color_component_t {
+    pub size: u8,
+    pub shift: u8,
+}
+
+#[repr(C)]
+pub struct l4re_video_pixel_info_t {
+    pub r: l4re_video_color_component_t,
+    pub g: l4re_video_color_component_t,
+    pub b: l4re_video_color_component_t,
+    pub a: l4re_video_color_component_t,
+    pub bytes_per_pixel: u8,
+}
+
+#[repr(C)]
+pub struct l4re_video_goos_info_t {
+    pub width: l4_umword_t,
+    pub height: l4_umword_t,
+    pub flags: u32,
+    pub num_static_views: u32,
+    pub num_static_buffers: u32,
+    pub pixel_info: l4re_video_pixel_info_t,
+}
+
+pub type l4re_video_goos_t = l4_cap_idx_t;
 
 #[repr(C)]
 pub struct l4_input_event_t {

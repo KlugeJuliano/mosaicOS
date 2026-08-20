@@ -74,17 +74,29 @@ pub struct Goos(pub Cap);
 
 impl Goos {
     pub fn get_info(&self) -> Result<(u32, u32, u8, u32), i32> {
-        let mut width = 0;
-        let mut height = 0;
-        let mut bpp = 0;
-        let mut pitch = 0;
+        let mut ginfo = l4re_video_goos_info_t {
+            width: 0,
+            height: 0,
+            flags: 0,
+            num_static_views: 0,
+            num_static_buffers: 0,
+            pixel_info: l4re_video_pixel_info_t {
+                r: l4re_video_color_component_t { size: 0, shift: 0 },
+                g: l4re_video_color_component_t { size: 0, shift: 0 },
+                b: l4re_video_color_component_t { size: 0, shift: 0 },
+                a: l4re_video_color_component_t { size: 0, shift: 0 },
+                bytes_per_pixel: 0,
+            },
+        };
         let res = unsafe {
-            l4re_video_goos_get_info(self.0 .0, &mut width, &mut height, &mut bpp, &mut pitch)
+            l4re_video_goos_get_info(self.0 .0, &mut ginfo as *mut _)
         };
         if res < 0 {
             Err(res)
         } else {
-            Ok((width, height, bpp, pitch))
+            let bpp = ginfo.pixel_info.bytes_per_pixel;
+            let pitch = (ginfo.width as u32) * (bpp as u32 / 8);
+            Ok((ginfo.width as u32, ginfo.height as u32, bpp, pitch as u32))
         }
     }
 
