@@ -1,6 +1,7 @@
 PKGDIR	?= .
 L4DIR	?= ../../../.lab/l4
 TARGET		= mosaic-graphical-hello
+SRC_C		= ../../../sdk/l4-rust/shim/l4_shim.c
 EXTRA_LIBS	= -lmosaic_hello
 REQUIRES_LIBS	= l4re l4re-util
 

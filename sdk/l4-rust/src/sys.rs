@@ -12,7 +12,6 @@ pub struct l4_msgtag_t {
 
 #[repr(C)]
 pub struct l4_utcb_t {
-    // This is architecture dependent, but we only care about MRs for now
     pub mr: [l4_umword_t; 64],
 }
 
@@ -21,8 +20,13 @@ pub const L4_INVALID_CAP: l4_cap_idx_t = !0;
 
 extern "C" {
     pub fn puts(s: *const c_char) -> i32;
+    
+    #[link_name = "rust_l4_utcb"]
     pub fn l4_utcb() -> *mut l4_utcb_t;
-    pub fn l4re_env_get_cap(name: *const c_char) -> l4_cap_idx_t;
+    
+    pub static mut l4re_global_env: *mut l4re_env_t;
+    
+    #[link_name = "rust_l4_ipc_call"]
     pub fn l4_ipc_call(
         dest: l4_cap_idx_t,
         utcb: *mut l4_utcb_t,
@@ -30,6 +34,7 @@ extern "C" {
         timeout: usize,
     ) -> l4_msgtag_t;
 
+    #[link_name = "rust_l4_ipc_reply_and_wait"]
     pub fn l4_ipc_reply_and_wait(
         utcb: *mut l4_utcb_t,
         tag: l4_msgtag_t,
@@ -46,6 +51,7 @@ extern "C" {
         max_addr: l4_umword_t,
     ) -> i32;
 
+    #[link_name = "rust_l4re_rm_attach"]
     pub fn l4re_rm_attach(
         addr: *mut *mut core::ffi::c_void,
         size: l4_umword_t,
@@ -55,6 +61,7 @@ extern "C" {
         align: u8,
     ) -> i32;
 
+    #[link_name = "rust_l4re_video_goos_info"]
     pub fn l4re_video_goos_get_info(
         goos: l4_cap_idx_t,
         width: *mut u32,
@@ -63,18 +70,46 @@ extern "C" {
         pitch: *mut u32,
     ) -> i32;
 
+    #[link_name = "rust_l4re_video_goos_refresh"]
     pub fn l4re_video_goos_refresh(
         goos: l4_cap_idx_t,
         x: u32, y: u32, w: u32, h: u32
     ) -> i32;
 
-    pub fn l4re_input_get_event(
-        input: l4_cap_idx_t,
-        event: *mut l4_input_event_t,
-    ) -> i32;
-
     pub fn l4_sleep(ms: u32);
 }
+
+#[repr(C)]
+pub struct l4re_env_cap_entry_t {
+    pub cap: l4_cap_idx_t,
+    pub flags: l4_umword_t,
+    pub name: [c_char; 16],
+}
+
+#[repr(C)]
+pub struct l4re_env_t {
+    pub parent: l4_cap_idx_t,
+    pub rm: l4_cap_idx_t,
+    pub mem_alloc: l4_cap_idx_t,
+    pub log: l4_cap_idx_t,
+    pub main_thread: l4_cap_idx_t,
+    pub factory: l4_cap_idx_t,
+    pub scheduler: l4_cap_idx_t,
+    pub itas: l4_cap_idx_t,
+    pub dbg_events: l4_cap_idx_t,
+    pub first_free_cap: l4_cap_idx_t,
+    pub first_free_reply_cap: l4_umword_t,
+    pub utcb_area: l4_fpage_t,
+    pub first_free_utcb: l4_addr_t,
+    pub caps: *mut l4re_env_cap_entry_t,
+}
+
+#[repr(C)]
+pub struct l4_fpage_t {
+    pub raw: l4_umword_t,
+}
+
+pub type l4_addr_t = l4_umword_t;
 
 #[repr(C)]
 pub struct l4_input_event_t {

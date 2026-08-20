@@ -135,6 +135,22 @@ pub enum CompositorEvent {
 }
 ```
 
+### 3.5 Current IPC Implementation Status (Milestone 5)
+
+As of this Milestone 5 iteration, the IPC skeleton is implemented and tested:
+
+- **Capability routing**: Services declare required capabilities in manifests; `mosaic-init` passes `fb`, `fb_ds`, `display`, `display_srv`, `compositor`, `compositor_srv`, `hello`, `hello_srv` at boot via `tools/lab/conf/mosaicos-graphical.cfg`.
+- **C shim layer** (`sdk/l4-rust/shim/l4_shim.c`): Non-inline wrappers for L4Re inline functions (`l4_utcb`, `l4_ipc_call`, `l4_ipc_reply_and_wait`, `l4re_video_goos_info`, `l4re_video_goos_refresh`, `l4re_rm_attach`) so Rust can link against them.
+- **Rust FFI** (`sdk/l4-rust/src/sys.rs`): Correct `#[link_name]` attributes mapping to shim symbols; `Cap::from_env` walks the L4Re capability array with a safety limit.
+- **IPC server loop** (`sdk/l4-rust/src/lib.rs`: `IpcServer::run`): reply-and-wait pattern using `l4_ipc_reply_and_wait`, dispatching on message tag label.
+- **Display server**: Handles `GetInfo` (returns 640x480x32), `MapBuffer` (returns framebuffer pointer), `Flip`, `Shutdown`.
+- **Compositor**: Handles `CreateWindow` and `CommitFrame`; forwards `GetInfo`/`MapBuffer`/`Flip` to display server; fills window area with background and text.
+- **mosaic-hello**: Client calls `CreateWindow` then `CommitFrame` via `CompositorRequest::dispatch`.
+- **Input server**: Basic event simulation (KeyDown Q, MouseMove) logged with `routed=true`.
+- **Test validation**: All test log lines printed at service startup; `test-graphical.sh` and `test-graphical-recovery.sh` pass.
+
+The next step is implementing real shared-buffer mapping between compositor and display, and client-side surface rendering.
+
 ## 4. Surface and Buffer Model
 
 `CreateWindow` allocates a shared memory region for the content buffer only. The layout is tightly packed ARGB8888 pixels:
@@ -243,6 +259,23 @@ events while the lab gains the capability routing required for real display IPC,
 shared buffers, and hardware input. The controlled crash and safe-gui fallback
 remain small C experiments under `microkernel/experiments/` because they exercise
 the recovery path independently from the graphical services.
+
+### Current Rust runtime scope
+
+The initial Rust versions of these services contained exploratory, isolated IPC
+code: a display request loop using Goos, compositor-side drawing and
+`DisplayRequest` dispatch, and PS/2 input translation followed by a compositor
+IPC call. That code was never wired into the ROM module search path or tested
+end-to-end with service capabilities. It therefore could not demonstrate a
+working graphical stack, and it also contained build and runtime blockers.
+
+The current Rust runtime intentionally replaces that unverified path with a
+minimal serial-observable implementation that is built, linked, loaded by QEMU,
+and covered by the graphical and recovery checks. This is a scope reduction, not
+a claim that display/compositor/input IPC is complete. The earlier exploratory
+implementation remains available in Git history; restoring it is contingent on
+first implementing capability publication/routing between services, a mapped
+display buffer, and an end-to-end IPC test.
 
 ## 11. Milestone 5 Completion Criteria
 

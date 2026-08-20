@@ -1,5 +1,5 @@
 use crate::protocol::SurfaceRole;
-use l4_rust::{Cap, utcb, ipc_call, sys::l4_msgtag_t};
+use l4_rust::{Cap, utcb, ipc_call, sys::{l4_msgtag_t, l4_utcb_t}};
 
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -87,7 +87,8 @@ impl CompositorRequest {
                         64
                     );
                 }
-                let tag = l4_msgtag_t::new(1, (3 + (64 / core::mem::size_of::<usize>())) as u32, 0, 0);
+                let title_words = (64 + core::mem::size_of::<usize>() - 1) / core::mem::size_of::<usize>();
+                let tag = l4_msgtag_t::new(1, (3 + title_words) as u32, 0, 0);
                 let _res = ipc_call(cap, tag);
                 Ok(())
             }

@@ -10,7 +10,7 @@
 #define MAX_FIELD 128
 #define MAX_SERVICES 8
 #define MAX_REQUIRES 4
-#define MAX_CAPABILITIES 4
+#define MAX_CAPABILITIES 5
 
 enum service_state {
   STATE_DEFINED,
