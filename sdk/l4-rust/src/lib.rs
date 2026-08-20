@@ -13,43 +13,8 @@ pub struct Cap(pub l4_cap_idx_t);
 
 impl Cap {
     pub fn from_env(name: &CStr) -> Option<Self> {
-        let env = unsafe { l4re_global_env.as_ref()? };
-        let mut entry = env.caps;
-        let name_bytes = name.to_bytes();
-        let name_len = name_bytes.len();
-        
-        // Safety limit to prevent infinite loop on malformed caps list
-        for _ in 0..256 {
-            if entry.is_null() {
-                break;
-            }
-            
-            let e = unsafe { &*entry };
-            if e.flags == !0usize {
-                break;
-            }
-            
-            let mut match_len = 0;
-            for i in 0..16 {
-                if i >= name_len || e.name[i] == 0 {
-                    break;
-                }
-                if e.name[i] as u8 != name_bytes[i] {
-                    break;
-                }
-                match_len += 1;
-            }
-            
-            if match_len == name_len && (match_len == 16 || e.name[match_len] == 0) {
-                if e.cap != L4_INVALID_CAP {
-                    return Some(Cap(e.cap));
-                }
-            }
-            
-            entry = unsafe { entry.add(1) };
-        }
-        
-        None
+        let cap = unsafe { l4re_env_get_cap(name.as_ptr()) };
+        if cap == L4_INVALID_CAP { None } else { Some(Cap(cap)) }
     }
 
     pub fn is_valid(&self) -> bool {

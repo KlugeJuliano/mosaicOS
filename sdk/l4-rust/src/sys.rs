@@ -24,8 +24,6 @@ extern "C" {
     #[link_name = "rust_l4_utcb"]
     pub fn l4_utcb() -> *mut l4_utcb_t;
     
-    pub static mut l4re_global_env: *mut l4re_env_t;
-    
     #[link_name = "rust_l4_ipc_call"]
     pub fn l4_ipc_call(
         dest: l4_cap_idx_t,
@@ -76,40 +74,11 @@ extern "C" {
         x: u32, y: u32, w: u32, h: u32
     ) -> i32;
 
+    #[link_name = "rust_l4re_env_get_cap"]
+    pub fn l4re_env_get_cap(name: *const c_char) -> l4_cap_idx_t;
+
     pub fn l4_sleep(ms: u32);
 }
-
-#[repr(C)]
-pub struct l4re_env_cap_entry_t {
-    pub cap: l4_cap_idx_t,
-    pub flags: l4_umword_t,
-    pub name: [c_char; 16],
-}
-
-#[repr(C)]
-pub struct l4re_env_t {
-    pub parent: l4_cap_idx_t,
-    pub rm: l4_cap_idx_t,
-    pub mem_alloc: l4_cap_idx_t,
-    pub log: l4_cap_idx_t,
-    pub main_thread: l4_cap_idx_t,
-    pub factory: l4_cap_idx_t,
-    pub scheduler: l4_cap_idx_t,
-    pub itas: l4_cap_idx_t,
-    pub dbg_events: l4_cap_idx_t,
-    pub first_free_cap: l4_cap_idx_t,
-    pub first_free_reply_cap: l4_umword_t,
-    pub utcb_area: l4_fpage_t,
-    pub first_free_utcb: l4_addr_t,
-    pub caps: *mut l4re_env_cap_entry_t,
-}
-
-#[repr(C)]
-pub struct l4_fpage_t {
-    pub raw: l4_umword_t,
-}
-
-pub type l4_addr_t = l4_umword_t;
 
 #[repr(C)]
 pub struct l4_input_event_t {

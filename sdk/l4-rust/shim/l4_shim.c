@@ -32,3 +32,7 @@ int rust_l4re_rm_attach(void **start, unsigned long size, l4re_rm_flags_t flags,
                          unsigned char align) {
     return l4re_rm_attach(start, size, flags, mem, offs, align);
 }
+
+L4_CV l4_cap_idx_t rust_l4re_env_get_cap(const char *name) {
+    return l4re_env_get_cap(name);
+}
