@@ -30,6 +30,10 @@ pub fn ipc_call(dest: Cap, tag: l4_msgtag_t) -> l4_msgtag_t {
     unsafe { l4_ipc_call(dest.0, l4_utcb(), tag, 0) }
 }
 
+pub fn ipc_reply(utcb: *mut l4_utcb_t, tag: l4_msgtag_t, reply_cap: l4_cap_idx_t, timeout: usize) {
+    unsafe { l4_ipc_reply(utcb, tag, reply_cap, timeout) }
+}
+
 pub fn ipc_reply_and_wait(tag: l4_msgtag_t, src: &mut l4_cap_idx_t) -> l4_msgtag_t {
     unsafe { l4_ipc_reply_and_wait(l4_utcb(), tag, src as *mut _, 0) }
 }
@@ -74,17 +78,31 @@ pub struct Goos(pub Cap);
 
 impl Goos {
     pub fn get_info(&self) -> Result<(u32, u32, u8, u32), i32> {
-        let mut width = 0;
-        let mut height = 0;
-        let mut bpp = 0;
-        let mut pitch = 0;
-        let res = unsafe {
-            l4re_video_goos_get_info(self.0 .0, &mut width, &mut height, &mut bpp, &mut pitch)
+        console_log(b"MosaicOS Graphics: Goos::get_info calling l4re_video_goos_get_info\0");
+        let mut ginfo = l4re_video_goos_info_t {
+            width: 0,
+            height: 0,
+            flags: 0,
+            num_static_views: 0,
+            num_static_buffers: 0,
+            pixel_info: l4re_video_pixel_info_t {
+                r: l4re_video_color_component_t { size: 0, shift: 0 },
+                g: l4re_video_color_component_t { size: 0, shift: 0 },
+                b: l4re_video_color_component_t { size: 0, shift: 0 },
+                a: l4re_video_color_component_t { size: 0, shift: 0 },
+                bytes_per_pixel: 0,
+            },
         };
+        let res = unsafe {
+            l4re_video_goos_get_info(self.0 .0, &mut ginfo as *mut _)
+        };
+        console_log(b"MosaicOS Graphics: Goos::get_info returned from shim\0");
         if res < 0 {
             Err(res)
         } else {
-            Ok((width, height, bpp, pitch))
+            let bpp = ginfo.pixel_info.bytes_per_pixel;
+            let pitch = (ginfo.width as u32) * (bpp as u32 / 8);
+            Ok((ginfo.width as u32, ginfo.height as u32, bpp, pitch as u32))
         }
     }
 
@@ -132,6 +150,23 @@ impl IpcServer {
             tag = ipc_reply_and_wait(tag, &mut src);
             let reply_tag = handler(utcb(), tag, src);
             tag = reply_tag;
+        }
+    }
+
+    pub fn run_with_reply<F>(&self, mut handler: F) -> !
+    where
+        F: FnMut(&mut l4_utcb_t, l4_msgtag_t, l4_cap_idx_t),
+    {
+        let mut src = L4_INVALID_CAP;
+        let mut tag = l4_msgtag_t { raw: 0 };
+        loop {
+            tag = ipc_reply_and_wait(tag, &mut src);
+            // src now contains the caller's reply capability (implicit or explicit)
+            handler(utcb(), tag, src);
+            // Reply explicitly using the caller's reply capability
+            let reply_tag = l4_msgtag_t::new(0, 0, 0, 0);
+            unsafe { l4_ipc_reply(utcb(), reply_tag, src, 0) };
+            tag = l4_msgtag_t { raw: 0 };
         }
     }
 }

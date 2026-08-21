@@ -9,7 +9,6 @@ services:
     restart: never
     capabilities:
       - fb
-      - fb_ds
       - display_srv
     requires:
       - logger
@@ -32,7 +31,6 @@ services:
       fallback: safe-gui
     capabilities:
       - fb
-      - fb_ds
       - display
       - compositor_srv
       - hello

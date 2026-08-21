@@ -54,6 +54,7 @@ require_line "[CRASH] service=compositor reason=TaskExit restart_count=3 action=
 require_line "[CRASH] service=compositor reason=TaskExit restart_count=3 action=failed"
 require_line "[CRASH] service=compositor reason=TaskExit restart_count=3 action=fallback:safe-gui"
 require_line "MosaicOS Graphics: Safe Mode. Compositor unavailable."
+require_line "MosaicOS Graphics: ipc_roundtrip=ok"
 require_line "mosaic-init: status compositor   failed"
 require_line "mosaic-init: status safe-gui     running"
 
