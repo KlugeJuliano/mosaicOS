@@ -53,6 +53,7 @@ require_line "MosaicOS Graphics: compositor window id=1 title='MosaicOS Hello' g
 require_line "MosaicOS Graphics: compositor frame 1 clear=#101020 window=#1a1a2e text='MosaicOS Lab' cursor=visible"
 require_line "MosaicOS Graphics: app mosaic-hello create-window width=400 height=300 title='MosaicOS Hello'"
 require_line "MosaicOS Graphics: app mosaic-hello input KeyDown key=Q action=exit"
+require_line "MosaicOS Graphics: ipc_roundtrip=ok"
 require_line "mosaic-init: status hello-gui    running"
 
 printf 'Graphical test passed.\n'

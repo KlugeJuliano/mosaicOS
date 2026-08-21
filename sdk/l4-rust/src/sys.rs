@@ -78,6 +78,14 @@ extern "C" {
         buffer: *mut l4_cap_idx_t,
     ) -> i32;
 
+    #[link_name = "rust_l4_ipc_reply"]
+    pub fn l4_ipc_reply(
+        utcb: *mut l4_utcb_t,
+        tag: l4_msgtag_t,
+        reply_cap: l4_cap_idx_t,
+        timeout: usize,
+    );
+
     #[link_name = "rust_l4re_env_get_cap"]
     pub fn l4re_env_get_cap(name: *const c_char) -> l4_cap_idx_t;
 

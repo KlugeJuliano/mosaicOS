@@ -136,19 +136,19 @@ pub enum CompositorEvent {
 ```
 
 ### 3.5 Current IPC Implementation Status (Milestone 5)
-
+ 
 As of this Milestone 5 iteration, the IPC skeleton is implemented and tested:
-
+ 
 - **Capability routing**: Services declare required capabilities in manifests; `mosaic-init` passes `fb`, `fb_ds`, `display`, `display_srv`, `compositor`, `compositor_srv`, `hello`, `hello_srv` at boot via `tools/lab/conf/mosaicos-graphical.cfg`.
 - **C shim layer** (`sdk/l4-rust/shim/l4_shim.c`): Non-inline wrappers for L4Re inline functions (`l4_utcb`, `l4_ipc_call`, `l4_ipc_reply_and_wait`, `l4re_video_goos_info`, `l4re_video_goos_refresh`, `l4re_rm_attach`) so Rust can link against them.
 - **Rust FFI** (`sdk/l4-rust/src/sys.rs`): Correct `#[link_name]` attributes mapping to shim symbols; `Cap::from_env` walks the L4Re capability array with a safety limit.
 - **IPC server loop** (`sdk/l4-rust/src/lib.rs`: `IpcServer::run`): reply-and-wait pattern using `l4_ipc_reply_and_wait`, dispatching on message tag label.
 - **Display server**: Handles `GetInfo` (returns 640x480x32), `MapBuffer` (returns framebuffer pointer), `Flip`, `Shutdown`.
-- **Compositor**: Handles `CreateWindow` and `CommitFrame`; forwards `GetInfo`/`MapBuffer`/`Flip` to display server; fills window area with background and text.
+- **Compositor**: Handles `CreateWindow` and `CommitFrame`; forwards `GetInfo`/`MapBuffer`/`Flip` to display server using custom protocol (not Goos); fills window area with background and text.
 - **mosaic-hello**: Client calls `CreateWindow` then `CommitFrame` via `CompositorRequest::dispatch`.
 - **Input server**: Basic event simulation (KeyDown Q, MouseMove) logged with `routed=true`.
 - **Test validation**: All test log lines printed at service startup; `test-graphical.sh` and `test-graphical-recovery.sh` pass.
-
+ 
 The next step is implementing real shared-buffer mapping between compositor and display, and client-side surface rendering.
 
 ## 4. Surface and Buffer Model
@@ -261,14 +261,14 @@ remain small C experiments under `microkernel/experiments/` because they exercis
 the recovery path independently from the graphical services.
 
 ### Current Rust runtime scope
-
+ 
 The initial Rust versions of these services contained exploratory, isolated IPC
 code: a display request loop using Goos, compositor-side drawing and
 `DisplayRequest` dispatch, and PS/2 input translation followed by a compositor
 IPC call. That code was never wired into the ROM module search path or tested
 end-to-end with service capabilities. It therefore could not demonstrate a
 working graphical stack, and it also contained build and runtime blockers.
-
+ 
 The current Rust runtime intentionally replaces that unverified path with a
 minimal serial-observable implementation that is built, linked, loaded by QEMU,
 and covered by the graphical and recovery checks. This is a scope reduction, not
@@ -276,6 +276,25 @@ a claim that display/compositor/input IPC is complete. The earlier exploratory
 implementation remains available in Git history; restoring it is contingent on
 first implementing capability publication/routing between services, a mapped
 display buffer, and an end-to-end IPC test.
+ 
+**Current diagnostic state (as of latest commit):**
+ 
+The compositor now uses the display server's custom protocol (labels 1-4) instead
+of the Goos protocol for framebuffer management. The compositor calls the
+display server's custom protocol (label 1 = GetInfo, label 2 = MapBuffer, label
+3 = Flip) rather than Goos protocol functions. The display server implements the
+custom protocol and responds to these requests.
+ 
+Diagnostic logging has been added to both compositor and display-server to trace
+IPC flow. The compositor now uses the display server's custom protocol (labels
+1-4) for framebuffer management instead of the Goos protocol. Capability
+routing has been verified through debug logs showing all capabilities are
+correctly passed via manifest.
+ 
+Current diagnostic state shows the compositor enters the server loop and handles
+CreateWindow requests, but the hello app's CreateWindow call still needs
+verification for end-to-end IPC completion. The test suite passes, indicating
+all expected log lines are produced.
 
 ## 11. Milestone 5 Completion Criteria
 
